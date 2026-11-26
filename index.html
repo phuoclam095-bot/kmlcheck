@@ -57,7 +57,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border-hairline);
       border-radius: 26px;
-      padding: 24px 20px 22px;
+      padding: 22px 20px 22px;
       box-shadow: 0 20px 42px -12px rgba(217, 98, 43, 0.18), 0 2px 8px rgba(38, 21, 12, 0.04);
       margin: 0;
       position: relative;
@@ -71,48 +71,20 @@
       align-items: center;
     }
 
-    /* Logo biểu tượng KML Beauty phía trên */
-    .brand-logo-wrap {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #F2854E 0%, #C8501A 100%);
-      padding: 2.5px;
-      box-shadow: 0 8px 20px -4px rgba(217, 98, 43, 0.38);
-      margin-bottom: 10px;
+    /* Khung Logo KML chính thức phía trên */
+    .brand-logo-box {
+      height: 68px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: 8px;
     }
 
-    .brand-logo-inner {
-      width: 100%;
+    .brand-logo-box svg {
       height: 100%;
-      border-radius: 50%;
-      background: #FFF8F3;
-      border: 1px solid rgba(217, 98, 43, 0.25);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-
-    .brand-logo-monogram {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--peach-deep);
-      letter-spacing: 0.6px;
-    }
-
-    .brand-logo-sub {
-      font-size: 6.5px;
-      font-weight: 700;
-      letter-spacing: 1.4px;
-      color: var(--peach-primary);
-      text-transform: uppercase;
-      margin-top: 2px;
+      width: auto;
+      display: block;
+      filter: drop-shadow(0 4px 10px rgba(235, 90, 12, 0.15));
     }
 
     .brand-eyebrow {
@@ -698,12 +670,59 @@
 
   <div class="container">
     <div class="header">
-      <!-- Logo KML Beauty phía trên -->
-      <div class="brand-logo-wrap" aria-hidden="true">
-        <div class="brand-logo-inner">
-          <span class="brand-logo-monogram">KML</span>
-          <span class="brand-logo-sub">BEAUTY</span>
-        </div>
+      <!-- Logo chính thức KML (Vector sắc nét từ logo gốc) -->
+      <div class="brand-logo-box" aria-label="Logo KML Beauty">
+        <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="kmlPetalTop" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F7A71B"/>
+              <stop offset="100%" stop-color="#F0720A"/>
+            </linearGradient>
+            <linearGradient id="kmlPetalLeftTop" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FBD243"/>
+              <stop offset="100%" stop-color="#F5A623"/>
+            </linearGradient>
+            <linearGradient id="kmlPetalLeftMid" x1="0%" y1="0%" x2="100%" y2="50%">
+              <stop offset="0%" stop-color="#F8C236"/>
+              <stop offset="100%" stop-color="#F2951B"/>
+            </linearGradient>
+            <linearGradient id="kmlPetalBottom" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#E64A08"/>
+              <stop offset="100%" stop-color="#F26B0E"/>
+            </linearGradient>
+            <linearGradient id="kmlSwoosh" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#E64A08"/>
+              <stop offset="60%" stop-color="#F26D0D"/>
+              <stop offset="100%" stop-color="#F89B1C"/>
+            </linearGradient>
+            <linearGradient id="kmlTextGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#F57B11"/>
+              <stop offset="100%" stop-color="#E64A08"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Chấm tròn vàng trên đỉnh -->
+          <circle cx="204" cy="24" r="14.5" fill="#F9AE19"/>
+
+          <!-- 4 cánh hoa chuyển sắc -->
+          <path d="M174 74 C156 54, 156 26, 174 10 C192 26, 192 54, 174 74 Z" fill="url(#kmlPetalTop)"/>
+          <path d="M174 74 C146 68, 128 48, 128 24 C152 24, 170 44, 174 74 Z" fill="url(#kmlPetalLeftTop)" opacity="0.92"/>
+          <path d="M174 74 C148 86, 122 82, 106 66 C122 50, 148 52, 174 74 Z" fill="url(#kmlPetalLeftMid)" opacity="0.92"/>
+          <path d="M174 74 C168 100, 148 118, 124 122 C126 96, 146 78, 174 74 Z" fill="url(#kmlPetalBottom)"/>
+
+          <!-- Đường cong chữ J ôm bên phải -->
+          <path d="M218 36 C204 66, 200 100, 176 118 C154 134, 124 134, 104 132 C128 130, 152 126, 170 110 C190 92, 196 62, 218 36 Z" fill="url(#kmlSwoosh)"/>
+
+          <!-- Chữ KML in đậm có móc chữ L -->
+          <g fill="url(#kmlTextGrad)">
+            <!-- Chữ K -->
+            <path d="M22 146 H43 V171 L67 146 H93 L64 175 L96 210 H69 L43 181 V210 H22 Z"/>
+            <!-- Chữ M -->
+            <path d="M106 146 H131 L147 183 L163 146 H188 V210 H168 V169 L152 204 H142 L126 169 V210 H106 Z"/>
+            <!-- Chữ L với đuôi uốn cong lên -->
+            <path d="M204 146 H226 V193 H262 C272 193, 281 189, 288 183 C283 199, 270 210, 252 210 H204 Z"/>
+          </g>
+        </svg>
       </div>
 
       <div class="brand-eyebrow">
@@ -874,7 +893,6 @@
       };
 
       try {
-        // Ưu tiên luồng Full HD + lấy nét liên tục để đọc mã vạch từ xa cực nét
         await html5QrCode.start(
           { facingMode: "environment" },
           {
@@ -890,7 +908,6 @@
         );
       } catch (err1) {
         try {
-          // Fallback tự động nếu WebView/Zalo không hỗ trợ constraints nâng cao
           await html5QrCode.start({ facingMode: "environment" }, scanConfig, onDecoded);
         } catch (err2) {
           scannerWrapper.classList.remove("active");
@@ -900,7 +917,6 @@
         }
       }
 
-      // Tự động zoom nhẹ 1.5x (nếu thiết bị hỗ trợ) để bắt mã vạch từ xa mà không cần dí sát
       try {
         const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
         const zoomCap = capabilities.zoomFeature();
@@ -916,6 +932,7 @@
       btn.innerHTML = "Tạm Dừng Camera";
       btn.classList.remove("active-start");
     }
+
     function checkManualCode() {
       const val = document.getElementById("manualCode").value.trim();
       if (!val) return alert("Vui lòng nhập mã số sản phẩm!");
