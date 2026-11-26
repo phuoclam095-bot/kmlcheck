@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Quản Trị Sản Phẩm & Tem QR</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f1f5f9; color: #0f172a; padding: 14px; display: flex; justify-content: center; }
+    .app { width: 100%; max-width: 560px; }
+
+    .card { background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+
+    .form-group { margin-bottom: 13px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px; }
+    input, textarea, select { width: 100%; padding: 11px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14.5px; outline: none; background: #fff; }
+    input:focus, textarea:focus, select:focus { border-color: #16a34a; }
+    textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
+
+    .input-with-scan { display: flex; gap: 8px; }
+    .input-with-scan input { flex: 1; }
+    .btn-scan { padding: 0 14px; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+    .btn-scan:active { opacity: 0.85; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-submit { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+    .btn-submit:active { background: #15803d; }
+
+    /* Tabs */
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .btn-logout { background: #fee2e2; color: #dc2626; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+    .tab-btn { padding: 10px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; }
+    .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+
+    /* QR Preview Box */
+    .qr-preview { margin-top: 16px; padding: 16px; border: 1.5px dashed #16a34a; border-radius: 14px; text-align: center; background: #f0fdf4; display: none; }
+    .qr-preview img { width: 190px; height: 190px; border-radius: 10px; background: #fff; padding: 8px; border: 1px solid #bbf7d0; }
+    .qr-preview p { font-size: 12.5px; color: #166534; margin-top: 8px; word-break: break-all; }
+
+    /* Modal Camera Quét Nhanh */
+    .cam-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
+    .cam-modal.show { display: flex; }
+    .cam-box { width: 100%; max-width: 400px; background: #fff; border-radius: 18px; padding: 16px; text-align: center; }
+    #adminReader { width: 100%; border-radius: 12px; overflow: hidden; margin: 12px 0; }
+    .btn-close-cam { width: 100%; padding: 11px; border: none; border-radius: 10px; background: #ef4444; color: #fff; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <div id="loginView" class="card">
+    <h1>Đăng Nhập Quản Trị</h1>
+    <p class="sub">Quản lý thông tin sản phẩm & mã QR chống hàng giả</p>
+    <div class="form-group">
+      <label>Tài khoản Admin</label>
+      <input type="text" id="loginUser" placeholder="Nhập username (VD: admin)" />
+    </div>
+    <div class="form-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="loginPass" placeholder="Nhập mật khẩu" onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="btn-submit" onclick="doLogin()">Đăng nhập hệ thống</button>
+  </div>
+
+  <!-- MÀN HÌNH QUẢN TRỊ SAU KHI ĐĂNG NHẬP -->
+  <div id="adminView" style="display:none;">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h1 id="welcomeText">Xin chào, Admin</h1>
+          <p class="sub" style="margin-bottom:0;">Thêm mới hoặc cập nhật dữ liệu lên Supabase</p>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+      </div>
+
+      <div class="tabs">
+        <button id="tabProd" class="tab-btn active" onclick="switchTab('prod')">1. Thêm Sản Phẩm</button>
+        <button id="tabQr" class="tab-btn" onclick="switchTab('qr')">2. Thêm Mã QR</button>
+      </div>
+
+      <!-- FORM 1: THÊM / SỬA SẢN PHẨM (MÃ VẠCH) -->
+      <div id="formProduct">
+        <div class="form-group">
+          <label>Mã vạch sản phẩm (Barcode) *</label>
+          <div class="input-with-scan">
+            <input type="text" id="pBarcode" placeholder="VD: 8938546852123" />
+            <button type="button" class="btn-scan" onclick="openScanner('pBarcode')">📷 Quét mã</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tên sản phẩm *</label>
+          <input type="text" id="pName" placeholder="VD: KML WHITENING BODY CREAM" />
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label>Giá niêm yết (VNĐ)</label>
+            <input type="number" id="pPrice" placeholder="VD: 260000" />
+          </div>
+          <div class="form-group">
+            <label>Khối lượng / Dung tích</label>
+            <input type="text" id="pWeight" placeholder="VD: 200 gr" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label>Xuất xứ</label>
+            <input type="text" id="pOrigin" value="Việt Nam" />
+          </div>
+          <div class="form-group">
+            <label>Đơn vị sở hữu / Phân phối</label>
+            <input type="text" id="pBrand" placeholder="VD: KML Beauty" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Link hình ảnh sản phẩm</label>
+          <input type="text" id="pImg" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label>Thành phần</label>
+          <textarea id="pIngredients" placeholder="Nhập danh sách thành phần..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Công dụng</label>
+          <textarea id="pUses" placeholder="Nhập công dụng nổi bật..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Hướng dẫn sử dụng</label>
+          <textarea id="pUsage" placeholder="Nhập cách sử dụng..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Bảo quản</label>
+          <textarea id="pStorage" placeholder="VD: Tránh ánh nắng trực tiếp, để nơi khô ráo..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
+      </div>
+
+      <!-- FORM 2: THÊM MÃ QR XÁC THỰC CHỐNG GIẢ -->
+      <div id="formQr" style="display:none;">
+        <div class="form-group">
+          <label>Chọn sản phẩm liên kết (Mã vạch gốc) *</label>
+          <div class="input-with-scan">
+            <input type="text" id="qBarcode" list="productOptions" placeholder="Nhập hoặc quét mã vạch sản phẩm..." />
+            <button type="button" class="btn-scan" onclick="openScanner('qBarcode')">📷 Quét</button>
+          </div>
+          <datalist id="productOptions"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label>Mã QR xác thực (Quét QR có sẵn hoặc tự tạo) *</label>
+          <div class="input-with-scan">
+            <input type="text" id="qCode" placeholder="VD: KML-8938546852123-AUTH" />
+            <button type="button" class="btn-scan" onclick="openScanner('qCode')">📷 Quét QR</button>
+          </div>
+          <div style="margin-top:6px; text-align:right;">
+            <a href="javascript:void(0)" onclick="autoGenQrCode()" style="font-size:12.5px; color:#16a34a; font-weight:600; text-decoration:none;">⚡ Tự sinh mã ngẫu nhiên</a>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Số lô sản xuất (Batch Code)</label>
+          <input type="text" id="qBatch" placeholder="VD: LOT-2026-11" />
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label>Ngày sản xuất</label>
+            <input type="date" id="qMfg" />
+          </div>
+          <div class="form-group">
+            <label>Hạn sử dụng</label>
+            <input type="date" id="qExp" />
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="saveQrCode()">💾 Lưu Mã QR & Tạo Ảnh Tem</button>
+
+        <!-- Hiển thị ảnh QR tĩnh ngay sau khi lưu để tải về in -->
+        <div id="qrPreviewBox" class="qr-preview">
+          <img id="qrPreviewImg" src="" alt="Mã QR tĩnh" />
+          <p id="qrPreviewLink"></p>
+          <a id="qrDownloadBtn" href="" download="ma-qr-chinh-hang.png" target="_blank" style="display:inline-block; margin-top:10px; padding:8px 16px; background:#0f172a; color:#fff; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">⬇️ Mở / Tải Ảnh QR Tĩnh</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMERA QUÉT MÃ VÀO Ô INPUT -->
+<div id="camModal" class="cam-modal">
+  <div class="cam-box">
+    <h3 style="font-size:16px;">Đưa mã vạch hoặc QR vào khung</h3>
+    <div id="adminReader"></div>
+    <button class="btn-close-cam" onclick="closeScanner()">Đóng Camera</button>
+  </div>
+</div>
+
+<script>
+  // CẤU HÌNH LINK WEBHOOK ADMIN & DOMAIN TRANG KHÁCH QUÉT
+  const ADMIN_WEBHOOK_URL = "https://wsm.congtubaclieu.com.vn/webhook/admin-api";
+  const PUBLIC_CHECK_URL  = "https://kmlcheck.vercel.app/";
+
+  let creds = { username: "", password: "" };
+  let targetInputId = null;
+  let scannerInstance = null;
+
+  // Tự động khôi phục phiên đăng nhập nếu đã lưu
+  window.addEventListener("DOMContentLoaded", () => {
+    const saved = sessionStorage.getItem("kml_admin_creds");
+    if (saved) {
+      creds = JSON.parse(saved);
+      doLogin(true);
+    }
+  });
+
+  async function callAdminApi(payload) {
+    const res = await fetch(ADMIN_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...creds, ...payload })
+    });
+    const data = await res.json();
+    return Array.isArray(data) ? data[0] : data;
+  }
+
+  async function doLogin(silent = false) {
+    if (!silent) {
+      creds.username = document.getElementById("loginUser").value.trim();
+      creds.password = document.getElementById("loginPass").value;
+    }
+    if (!creds.username || !creds.password) return alert("Vui lòng nhập đủ tài khoản và mật khẩu!");
+
+    try {
+      const res = await callAdminApi({ action: "login" });
+      if (res && res.authenticated) {
+        sessionStorage.setItem("kml_admin_creds", JSON.stringify(creds));
+        document.getElementById("loginView").style.display = "none";
+        document.getElementById("adminView").style.display = "block";
+        document.getElementById("welcomeText").textContent = "Xin chào, " + (res.full_name || creds.username);
+        updateProductDatalist(res.products_list || []);
+      } else {
+        sessionStorage.removeItem("kml_admin_creds");
+        if (!silent) alert(res?.message || "Đăng nhập thất bại!");
+      }
+    } catch (e) {
+      alert("Lỗi kết nối n8n Webhook!");
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem("kml_admin_creds");
+    creds = { username: "", password: "" };
+    document.getElementById("adminView").style.display = "none";
+    document.getElementById("loginView").style.display = "block";
+  }
+
+  function switchTab(tab) {
+    document.getElementById("tabProd").classList.toggle("active", tab === "prod");
+    document.getElementById("tabQr").classList.toggle("active", tab === "qr");
+    document.getElementById("formProduct").style.display = tab === "prod" ? "block" : "none";
+    document.getElementById("formQr").style.display = tab === "qr" ? "block" : "none";
+  }
+
+  function updateProductDatalist(list) {
+    const dl = document.getElementById("productOptions");
+    dl.innerHTML = "";
+    (list || []).forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.barcode;
+      opt.label = p.name;
+      dl.appendChild(opt);
+    });
+  }
+
+  async function saveProduct() {
+    const payload = {
+      action: "save_product",
+      barcode: document.getElementById("pBarcode").value.trim(),
+      name: document.getElementById("pName").value.trim(),
+      price: document.getElementById("pPrice").value.trim(),
+      weight: document.getElementById("pWeight").value.trim(),
+      origin: document.getElementById("pOrigin").value.trim(),
+      brand_owner: document.getElementById("pBrand").value.trim(),
+      image_url: document.getElementById("pImg").value.trim(),
+      ingredients: document.getElementById("pIngredients").value.trim(),
+      uses: document.getElementById("pUses").value.trim(),
+      usage_instructions: document.getElementById("pUsage").value.trim(),
+      storage_instructions: document.getElementById("pStorage").value.trim()
+    };
+
+    if (!payload.barcode || !payload.name) return alert("Vui lòng nhập Mã vạch và Tên sản phẩm!");
+
+    try {
+      const res = await callAdminApi(payload);
+      alert(res.message);
+      if (res.products_list) updateProductDatalist(res.products_list);
+    } catch (e) {
+      alert("Lỗi khi lưu sản phẩm!");
+    }
+  }
+
+  function autoGenQrCode() {
+    const bc = document.getElementById("qBarcode").value.trim() || "SP";
+    const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+    document.getElementById("qCode").value = `${bc}-${rand}`;
+  }
+
+  async function saveQrCode() {
+    const payload = {
+      action: "save_qr",
+      barcode: document.getElementById("qBarcode").value.trim(),
+      qr_code: document.getElementById("qCode").value.trim(),
+      batch_code: document.getElementById("qBatch").value.trim(),
+      mfg_date: document.getElementById("qMfg").value,
+      exp_date: document.getElementById("qExp").value
+    };
+
+    if (!payload.barcode || !payload.qr_code) return alert("Vui lòng nhập Mã vạch gốc và Mã QR!");
+
+    try {
+      const res = await callAdminApi(payload);
+      alert(res.message);
+
+      if (res.authenticated && res.message.includes("thành công")) {
+        const fullLink = `${PUBLIC_CHECK_URL}?code=${encodeURIComponent(payload.qr_code)}`;
+        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullLink)}`;
+        document.getElementById("qrPreviewImg").src = qrImgUrl;
+        document.getElementById("qrPreviewLink").textContent = fullLink;
+        document.getElementById("qrDownloadBtn").href = qrImgUrl;
+        document.getElementById("qrPreviewBox").style.display = "block";
+      }
+    } catch (e) {
+      alert("Lỗi khi lưu mã QR!");
+    }
+  }
+
+  // =========================================================================
+  // CAMERA QUÉT MÃ VẠCH / QR ĐIỀN THẲNG VÀO Ô INPUT
+  // =========================================================================
+  async function openScanner(inputId) {
+    targetInputId = inputId;
+    document.getElementById("camModal").classList.add("show");
+    scannerInstance = new Html5Qrcode("adminReader");
+
+    try {
+      await scannerInstance.start(
+        { facingMode: "environment" },
+        {
+          fps: 12,
+          qrbox: { width: 250, height: 150 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.UPC_A
+          ]
+        },
+        (decodedText) => {
+          let cleanVal = decodedText.trim();
+          // Nếu quét QR chứa link thì tự tách lấy tham số ?code=
+          try {
+            if (cleanVal.startsWith("http")) {
+              const u = new URL(cleanVal);
+              cleanVal = u.searchParams.get("code") || u.searchParams.get("id") || cleanVal;
+            }
+          } catch (e) {}
+
+          if (targetInputId) {
+            document.getElementById(targetInputId).value = cleanVal;
+          }
+          closeScanner();
+        }
+      );
+    } catch (err) {
+      closeScanner();
+      alert("Không mở được camera. Vui lòng cấp quyền Camera và chạy qua HTTPS.");
+    }
+  }
+
+  async function closeScanner() {
+    if (scannerInstance) {
+      try { await scannerInstance.stop(); } catch (e) {}
+      scannerInstance = null;
+    }
+    document.getElementById("camModal").classList.remove("show");
+  }
+</script>
+</body>
+</html>
