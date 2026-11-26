@@ -218,11 +218,19 @@
     .meta-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .meta-label { color: #64748b; white-space: nowrap; flex-shrink: 0; }
     .meta-val { font-weight: 600; color: #0f172a; text-align: right; }
-    /* Ép tên công ty hiển thị gọn 1 dòng duy nhất, tự co chữ vừa khít màn hình nhỏ */
+    .meta-row-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      padding: 2px 0;
+    }
     .meta-company {
-      white-space: nowrap;
-      font-size: clamp(10.5px, 2.85vw, 13px);
-      letter-spacing: -0.2px;
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: left;
     }
 
     .detail-section { margin-top: 15px; padding-top: 13px; border-top: 1px solid #f1f5f9; }
@@ -563,7 +571,10 @@
       }
 
       metaHtml += `
-        <div class="meta-row"><span class="meta-label">Đơn vị sở hữu:</span><span class="meta-val meta-company">${escapeHtml(ownerName)}</span></div>
+        <div class="meta-row-col">
+          <span class="meta-label">Đơn vị sở hữu:</span>
+          <span class="meta-company">${escapeHtml(ownerName)}</span>
+        </div>
         <div class="meta-row"><span class="meta-label">MST:</span><span class="meta-val">${COMPANY_TAX_CODE}</span></div>
       `;
 
