@@ -37,10 +37,12 @@
     .tab-btn { padding: 10px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; }
     .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 
-    /* QR Preview Box */
-    .qr-preview { margin-top: 16px; padding: 16px; border: 1.5px dashed #16a34a; border-radius: 14px; text-align: center; background: #f0fdf4; display: none; }
-    .qr-preview img { width: 190px; height: 190px; border-radius: 10px; background: #fff; padding: 8px; border: 1px solid #bbf7d0; }
-    .qr-preview p { font-size: 12.5px; color: #166534; margin-top: 8px; word-break: break-all; }
+    /* QR Master Box */
+    .qr-master-card { padding: 18px; border: 1.5px solid #bbf7d0; border-radius: 16px; text-align: center; background: #f0fdf4; }
+    .qr-master-card img { width: 220px; height: 220px; border-radius: 12px; background: #fff; padding: 10px; border: 1px solid #86efac; box-shadow: 0 4px 12px rgba(22,163,74,0.08); }
+    .qr-url-badge { margin-top: 12px; padding: 8px 12px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; }
+    .qr-guide { font-size: 13px; color: #166534; line-height: 1.5; margin-top: 10px; text-align: left; background: #dcfce7; padding: 10px 12px; border-radius: 10px; }
+    .btn-download-qr { display: inline-block; width: 100%; margin-top: 14px; padding: 12px 16px; background: #0f172a; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; }
 
     /* Modal Camera Quét Nhanh */
     .cam-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
@@ -80,8 +82,8 @@
       </div>
 
       <div class="tabs">
-        <button id="tabProd" class="tab-btn active" onclick="switchTab('prod')">1. Thêm Sản Phẩm</button>
-        <button id="tabQr" class="tab-btn" onclick="switchTab('qr')">2. Thêm Mã QR</button>
+        <button id="tabProd" class="tab-btn active" onclick="switchTab('prod')">1. Quản Lý Sản Phẩm</button>
+        <button id="tabQr" class="tab-btn" onclick="switchTab('qr')">2. Tem QR Chung</button>
       </div>
 
       <!-- FORM 1: THÊM / SỬA SẢN PHẨM (MÃ VẠCH) -->
@@ -149,51 +151,24 @@
         <button class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
       </div>
 
-      <!-- FORM 2: THÊM MÃ QR XÁC THỰC CHỐNG GIẢ -->
+      <!-- TAB 2: MÃ QR TĨNH DÙNG CHUNG CHO TOÀN BỘ SẢN PHẨM -->
       <div id="formQr" style="display:none;">
-        <div class="form-group">
-          <label>Chọn sản phẩm liên kết (Mã vạch gốc) *</label>
-          <div class="input-with-scan">
-            <input type="text" id="qBarcode" list="productOptions" placeholder="Nhập hoặc quét mã vạch sản phẩm..." />
-            <button type="button" class="btn-scan" onclick="openScanner('qBarcode')">📷 Quét</button>
+        <div class="qr-master-card">
+          <div style="font-size:14px; font-weight:700; color:#15803d; margin-bottom:10px;">
+            MÃ QR TĨNH DÙNG CHUNG TOÀN BỘ SẢN PHẨM
           </div>
-          <datalist id="productOptions"></datalist>
-        </div>
+          <img id="masterQrImg" src="" alt="Mã QR Chung Chính Hãng" />
+          <div id="masterQrUrl" class="qr-url-badge"></div>
 
-        <div class="form-group">
-          <label>Mã QR xác thực (Quét QR có sẵn hoặc tự tạo) *</label>
-          <div class="input-with-scan">
-            <input type="text" id="qCode" placeholder="VD: KML-8938546852123-AUTH" />
-            <button type="button" class="btn-scan" onclick="openScanner('qCode')">📷 Quét QR</button>
+          <div class="qr-guide">
+            <strong>Cách sử dụng:</strong><br/>
+            • Đây là mã QR tĩnh duy nhất in chung cho tất cả vỏ hộp/tem sản phẩm.<br/>
+            • Khách dùng Zalo quét mã này → Trang web mở lên → Khách quét tiếp <strong>mã vạch sọc</strong> trên từng hộp để xem thông tin sản phẩm tương ứng.
           </div>
-          <div style="margin-top:6px; text-align:right;">
-            <a href="javascript:void(0)" onclick="autoGenQrCode()" style="font-size:12.5px; color:#16a34a; font-weight:600; text-decoration:none;">⚡ Tự sinh mã ngẫu nhiên</a>
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label>Số lô sản xuất (Batch Code)</label>
-          <input type="text" id="qBatch" placeholder="VD: LOT-2026-11" />
-        </div>
-
-        <div class="row-2">
-          <div class="form-group">
-            <label>Ngày sản xuất</label>
-            <input type="date" id="qMfg" />
-          </div>
-          <div class="form-group">
-            <label>Hạn sử dụng</label>
-            <input type="date" id="qExp" />
-          </div>
-        </div>
-
-        <button class="btn-submit" onclick="saveQrCode()">💾 Lưu Mã QR & Tạo Ảnh Tem</button>
-
-        <!-- Hiển thị ảnh QR tĩnh ngay sau khi lưu để tải về in -->
-        <div id="qrPreviewBox" class="qr-preview">
-          <img id="qrPreviewImg" src="" alt="Mã QR tĩnh" />
-          <p id="qrPreviewLink"></p>
-          <a id="qrDownloadBtn" href="" download="ma-qr-chinh-hang.png" target="_blank" style="display:inline-block; margin-top:10px; padding:8px 16px; background:#0f172a; color:#fff; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">⬇️ Mở / Tải Ảnh QR Tĩnh</a>
+          <a id="masterQrDownload" href="" download="QR-Chinh-Hang-KML.png" target="_blank" class="btn-download-qr">
+            ⬇️ Tải Ảnh Mã QR Gốc (PNG) Để In
+          </a>
         </div>
       </div>
     </div>
@@ -218,8 +193,14 @@
   let targetInputId = null;
   let scannerInstance = null;
 
-  // Tự động khôi phục phiên đăng nhập nếu đã lưu
   window.addEventListener("DOMContentLoaded", () => {
+    // Khởi tạo sẵn hình QR tĩnh dùng chung
+    const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(PUBLIC_CHECK_URL)}`;
+    document.getElementById("masterQrImg").src = qrApi;
+    document.getElementById("masterQrUrl").textContent = PUBLIC_CHECK_URL;
+    document.getElementById("masterQrDownload").href = qrApi;
+
+    // Khôi phục phiên đăng nhập
     const saved = sessionStorage.getItem("kml_admin_creds");
     if (saved) {
       creds = JSON.parse(saved);
@@ -251,7 +232,6 @@
         document.getElementById("loginView").style.display = "none";
         document.getElementById("adminView").style.display = "block";
         document.getElementById("welcomeText").textContent = "Xin chào, " + (res.full_name || creds.username);
-        updateProductDatalist(res.products_list || []);
       } else {
         sessionStorage.removeItem("kml_admin_creds");
         if (!silent) alert(res?.message || "Đăng nhập thất bại!");
@@ -275,17 +255,6 @@
     document.getElementById("formQr").style.display = tab === "qr" ? "block" : "none";
   }
 
-  function updateProductDatalist(list) {
-    const dl = document.getElementById("productOptions");
-    dl.innerHTML = "";
-    (list || []).forEach(p => {
-      const opt = document.createElement("option");
-      opt.value = p.barcode;
-      opt.label = p.name;
-      dl.appendChild(opt);
-    });
-  }
-
   async function saveProduct() {
     const payload = {
       action: "save_product",
@@ -307,49 +276,13 @@
     try {
       const res = await callAdminApi(payload);
       alert(res.message);
-      if (res.products_list) updateProductDatalist(res.products_list);
     } catch (e) {
       alert("Lỗi khi lưu sản phẩm!");
     }
   }
 
-  function autoGenQrCode() {
-    const bc = document.getElementById("qBarcode").value.trim() || "SP";
-    const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
-    document.getElementById("qCode").value = `${bc}-${rand}`;
-  }
-
-  async function saveQrCode() {
-    const payload = {
-      action: "save_qr",
-      barcode: document.getElementById("qBarcode").value.trim(),
-      qr_code: document.getElementById("qCode").value.trim(),
-      batch_code: document.getElementById("qBatch").value.trim(),
-      mfg_date: document.getElementById("qMfg").value,
-      exp_date: document.getElementById("qExp").value
-    };
-
-    if (!payload.barcode || !payload.qr_code) return alert("Vui lòng nhập Mã vạch gốc và Mã QR!");
-
-    try {
-      const res = await callAdminApi(payload);
-      alert(res.message);
-
-      if (res.authenticated && res.message.includes("thành công")) {
-        const fullLink = `${PUBLIC_CHECK_URL}?code=${encodeURIComponent(payload.qr_code)}`;
-        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullLink)}`;
-        document.getElementById("qrPreviewImg").src = qrImgUrl;
-        document.getElementById("qrPreviewLink").textContent = fullLink;
-        document.getElementById("qrDownloadBtn").href = qrImgUrl;
-        document.getElementById("qrPreviewBox").style.display = "block";
-      }
-    } catch (e) {
-      alert("Lỗi khi lưu mã QR!");
-    }
-  }
-
   // =========================================================================
-  // CAMERA QUÉT MÃ VẠCH / QR ĐIỀN THẲNG VÀO Ô INPUT
+  // CAMERA QUÉT MÃ VẠCH ĐIỀN THẲNG VÀO Ô INPUT
   // =========================================================================
   async function openScanner(inputId) {
     targetInputId = inputId;
@@ -372,7 +305,6 @@
         },
         (decodedText) => {
           let cleanVal = decodedText.trim();
-          // Nếu quét QR chứa link thì tự tách lấy tham số ?code=
           try {
             if (cleanVal.startsWith("http")) {
               const u = new URL(cleanVal);
