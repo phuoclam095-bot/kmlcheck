@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Xác Thực Sản Phẩm Chính Hãng - KML Beauty</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- Thư viện ZXing chuyên giải mã siêu nhạy cả Mã Vạch 1D (EAN-13) & QR Code trên iOS/Android -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     html, body {
@@ -62,17 +63,21 @@
     }
     .scan-intro-icon { font-size: 32px; margin-bottom: 8px; display: block; }
 
-    /* KHUNG CAMERA 1 VIDEO DUY NHẤT - KHÔNG NHẢY KHUNG TRÊN ZALO */
+    /* KHUNG CAMERA INLINE TRÊN ZALO IOS (Không dùng display:none để tránh bung fullscreen) */
     .scanner-wrapper {
       position: relative;
       width: 100%;
-      height: 260px;
-      border-radius: 18px;
+      height: 0;
+      opacity: 0;
       overflow: hidden;
+      border-radius: 18px;
       background: #0f172a;
-      display: none;
+      transition: opacity 0.2s ease;
     }
-    .scanner-wrapper.active { display: block; }
+    .scanner-wrapper.active {
+      height: 260px;
+      opacity: 1;
+    }
 
     #camVideo {
       position: absolute;
@@ -82,6 +87,14 @@
       object-fit: cover;
       display: block;
       background: #0f172a;
+    }
+    #camVideo::-webkit-media-controls,
+    #camVideo::-webkit-media-controls-enclosure,
+    #camVideo::-webkit-media-controls-panel,
+    #camVideo::-webkit-media-controls-play-button,
+    #camVideo::-webkit-media-controls-start-playback-button {
+      display: none !important;
+      -webkit-appearance: none !important;
     }
 
     .scan-hud {
@@ -247,14 +260,6 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
-    #camVideo::-webkit-media-controls,
-    #camVideo::-webkit-media-controls-enclosure,
-    #camVideo::-webkit-media-controls-panel,
-    #camVideo::-webkit-media-controls-play-button,
-    #camVideo::-webkit-media-controls-start-playback-button {
-      display: none !important;
-      -webkit-appearance: none !important;
-    }
   </style>
 </head>
 <body>
@@ -272,7 +277,7 @@
       Bấm nút bên dưới để mở camera quét <strong>mã QR xác thực</strong> hoặc <strong>mã vạch sọc</strong> trên sản phẩm
     </div>
 
-    <!-- Khung Camera 1 video duy nhất, cố định chiều cao 260px -->
+    <!-- Khung Camera Inline 100% trên Zalo iOS -->
     <div class="scanner-wrapper" id="scannerWrapper">
       <video id="camVideo" autoplay playsinline webkit-playsinline="true" muted disablePictureInPicture></video>
 
@@ -287,9 +292,6 @@
         <div class="scan-hint-pill">Canh mã QR hoặc mã vạch vào giữa khung</div>
       </div>
     </div>
-
-    <!-- Vùng giải mã ngầm (ẩn hoàn toàn, không bao giờ hiện khung phụ) -->
-    <div id="hiddenDecoder" style="display:none;"></div>
 
     <button id="btnToggleCam" class="btn-primary" onclick="toggleCamera()">
       📷 Mở Camera Quét Mã
@@ -350,6 +352,12 @@
     const COMPANY_TAX_CODE = "1900685492";
 
     window.addEventListener("DOMContentLoaded", () => {
+      const video = document.getElementById("camVideo");
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("webkit-playsinline", "true");
+      video.playsInline = true;
+      video.muted = true;
+
       const params = new URLSearchParams(window.location.search);
       const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
       if (codeFromUrl && codeFromUrl.trim()) {
@@ -357,36 +365,29 @@
       }
     });
 
-    let mediaStream = null;
+    let zxingReader = null;
     let isScanning = false;
-    let scanTimer = null;
-    let fallbackScanner = null;
-    const offscreenCanvas = document.createElement("canvas");
-    const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
 
-    function stopMediaStream() {
+    function stopScanner() {
       isScanning = false;
-      if (scanTimer) {
-        clearTimeout(scanTimer);
-        scanTimer = null;
-      }
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        mediaStream = null;
+      if (zxingReader) {
+        try { zxingReader.reset(); } catch (e) {}
       }
       const video = document.getElementById("camVideo");
-      video.srcObject = null;
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+      }
     }
 
-   async function toggleCamera() {
+    async function toggleCamera() {
       const btn = document.getElementById("btnToggleCam");
       const introBox = document.getElementById("scanIntroBox");
       const scannerWrapper = document.getElementById("scannerWrapper");
       const video = document.getElementById("camVideo");
 
       if (isScanning) {
-        video.onpause = null;
-        stopMediaStream();
+        stopScanner();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
         btn.innerHTML = "📷 Mở Camera Quét Mã";
@@ -395,109 +396,64 @@
       }
 
       try {
-        // Bắt buộc thiết lập playsInline qua JS trước khi gán srcObject để Zalo iOS không mở fullscreen
         video.setAttribute("playsinline", "true");
         video.setAttribute("webkit-playsinline", "true");
         video.playsInline = true;
         video.muted = true;
 
-        mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false
-        });
+        // Mở khung ngay trong thao tác bấm để iOS Zalo giữ video inline
+        introBox.style.display = "none";
+        scannerWrapper.classList.add("active");
 
-        video.srcObject = mediaStream;
-        await video.play();
+        const hints = new Map();
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+          ZXing.BarcodeFormat.QR_CODE,
+          ZXing.BarcodeFormat.EAN_13,
+          ZXing.BarcodeFormat.EAN_8,
+          ZXing.BarcodeFormat.CODE_128,
+          ZXing.BarcodeFormat.UPC_A,
+          ZXing.BarcodeFormat.UPC_E
+        ]);
 
-        // Tự động phát lại bên trong khung nếu iOS tạm dừng video
-        video.onpause = () => {
-          if (isScanning && mediaStream) {
-            video.play().catch(() => {});
+        zxingReader = new ZXing.BrowserMultiFormatReader(hints, 150);
+
+        const constraints = {
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           }
         };
 
-        introBox.style.display = "none";
-        scannerWrapper.classList.add("active");
         isScanning = true;
         btn.innerHTML = "⏹ Tắt Camera";
         btn.classList.add("btn-stop");
 
-        startFrameDecodeLoop(video);
+        await zxingReader.decodeFromConstraints(constraints, "camVideo", (result, err) => {
+          if (!isScanning) return;
+          if (result && result.getText()) {
+            let extractedCode = result.getText().trim();
+            try {
+              if (extractedCode.startsWith("http")) {
+                const urlObj = new URL(extractedCode);
+                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
+              }
+            } catch (e) {}
+
+            toggleCamera();
+            verifyCode(extractedCode);
+          }
+        });
       } catch (err) {
-        video.onpause = null;
-        stopMediaStream();
+        stopScanner();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
+        btn.innerHTML = "📷 Mở Camera Quét Mã";
+        btn.classList.remove("btn-stop");
         alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
       }
-    }
-    function startFrameDecodeLoop(video) {
-      let detector = null;
-      if ("BarcodeDetector" in window) {
-        try {
-          detector = new BarcodeDetector({
-            formats: ["qr_code", "ean_13", "ean_8", "code_128", "upc_a", "upc_e"]
-          });
-        } catch (e) {
-          detector = null;
-        }
-      }
-
-      if (!detector && !fallbackScanner) {
-        fallbackScanner = new Html5Qrcode("hiddenDecoder", { verbose: false });
-      }
-
-      const handleDetected = (rawText) => {
-        if (!isScanning || !rawText) return;
-        let extractedCode = rawText.trim();
-        try {
-          if (extractedCode.startsWith("http")) {
-            const urlObj = new URL(extractedCode);
-            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
-          }
-        } catch (e) {}
-
-        // Tắt camera ngay lập tức và trả kết quả
-        toggleCamera();
-        verifyCode(extractedCode);
-      };
-
-      const scanStep = async () => {
-        if (!isScanning) return;
-
-        if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-          try {
-            if (detector) {
-              const barcodes = await detector.detect(video);
-              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                handleDetected(barcodes[0].rawValue);
-                return;
-              }
-            } else if (fallbackScanner) {
-              offscreenCanvas.width = video.videoWidth;
-              offscreenCanvas.height = video.videoHeight;
-              offscreenCtx.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-              const blob = await new Promise(res => offscreenCanvas.toBlob(res, "image/jpeg", 0.8));
-              if (blob) {
-                const file = new File([blob], "frame.jpg", { type: "image/jpeg" });
-                const text = await fallbackScanner.scanFile(file, false);
-                if (text) {
-                  handleDetected(text);
-                  return;
-                }
-              }
-            }
-          } catch (e) {
-            // Bỏ qua khung hình chưa bắt được mã
-          }
-        }
-
-        if (isScanning) {
-          scanTimer = setTimeout(scanStep, detector ? 120 : 250);
-        }
-      };
-
-      scanStep();
     }
 
     function checkManualCode() {
