@@ -265,6 +265,17 @@
       height: 58%;
       border-radius: 14px;
     }
+    .scanner-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      max-height: 290px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f172a;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -355,32 +366,39 @@
     const DEFAULT_COMPANY_NAME = "CTY TNHH MTV THƯƠNG MẠI KML BEAUTY";
     const COMPANY_TAX_CODE = "1900685492";
 
-    let html5QrCode = null;
+   let html5QrCode = null;
     let isScanning = false;
+    let isStarting = false;
 
     window.addEventListener("DOMContentLoaded", () => {
+      // Cho phép bấm trực tiếp vào khung camera nếu đang tắt
+      document.querySelector(".scanner-wrapper").addEventListener("click", () => {
+        if (!isScanning && !isStarting) startCamera();
+      });
+
       const params = new URLSearchParams(window.location.search);
       const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
       if (codeFromUrl && codeFromUrl.trim()) {
         verifyCode(codeFromUrl.trim());
       } else {
-        // Tự động mở camera ngay khi vào trang
+        // Thử tự động mở camera ngay khi vào trang
         startCamera();
       }
     });
 
     async function startCamera() {
-      if (isScanning) return;
+      if (isScanning || isStarting) return;
+      isStarting = true;
+
       const btn = document.getElementById("btnToggleCam");
       const fallback = document.getElementById("camFallback");
       const fallbackMsg = document.getElementById("camFallbackMsg");
       const hud = document.getElementById("scanHud");
 
       fallback.classList.add("show");
-      fallbackMsg.textContent = "Đang khởi động camera...";
+      fallbackMsg.innerHTML = "Đang khởi động camera...<br><span style='font-size:12px;opacity:0.8'>Vui lòng chọn <b>Cho phép (Allow)</b> nếu trình duyệt hỏi quyền</span>";
 
       if (!html5QrCode) {
-        // Kích hoạt bộ giải mã phần cứng BarcodeDetector của thiết bị để bắt mã vạch cực nhanh
         html5QrCode = new Html5Qrcode("reader", {
           experimentalFeatures: {
             useBarCodeDetectorIfSupported: true
@@ -397,51 +415,62 @@
         });
       }
 
-      try {
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          {
-            fps: 25,
-            // Mở rộng vùng quét ngang 88% để đọc trọn vẹn các vạch sọc EAN-13
-            qrbox: (vw, vh) => ({
-              width: Math.floor(vw * 0.88),
-              height: Math.floor(vh * 0.58)
-            }),
-            // Ép độ phân giải HD & lấy nét liên tục để vạch nhỏ không bị nhòe
-            videoConstraints: {
-              facingMode: "environment",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              focusMode: { ideal: "continuous" }
-            }
-          },
-          (decodedText) => {
-            let extractedCode = decodedText;
-            try {
-              if (decodedText.startsWith("http")) {
-                const urlObj = new URL(decodedText);
-                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
-              }
-            } catch (e) {}
-
-            stopCamera();
-            verifyCode(extractedCode.trim());
+      const onScanSuccess = (decodedText) => {
+        let extractedCode = decodedText;
+        try {
+          if (decodedText.startsWith("http")) {
+            const urlObj = new URL(decodedText);
+            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
           }
-        );
+        } catch (e) {}
 
-        isScanning = true;
-        fallback.classList.remove("show");
-        hud.style.display = "flex";
-        btn.innerHTML = "⏹ Tạm tắt Camera";
-        btn.classList.remove("active-start");
-      } catch (err) {
-        isScanning = false;
-        hud.style.display = "none";
-        fallback.classList.add("show");
-        fallbackMsg.textContent = "Bấm nút xanh bên dưới để cấp quyền mở Camera quét mã";
-        btn.innerHTML = "📷 Bật Camera Quét Mã";
-        btn.classList.add("active-start");
+        stopCamera();
+        verifyCode(extractedCode.trim());
+      };
+
+      const scanConfig = {
+        fps: 20,
+        qrbox: (vw, vh) => ({
+          width: Math.floor(vw * 0.85),
+          height: Math.floor(vh * 0.6)
+        })
+      };
+
+      try {
+        // Ưu tiên mở camera sau (tương thích mọi dòng máy iOS & Android)
+        await html5QrCode.start({ facingMode: "environment" }, scanConfig, onScanSuccess);
+        onCameraStarted();
+      } catch (err1) {
+        try {
+          // Dự phòng: Lấy danh sách camera thiết bị và chọn camera sau cùng nếu facingMode bị từ chối
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0) {
+            const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
+            await html5QrCode.start(backCam.id, scanConfig, onScanSuccess);
+            onCameraStarted();
+          } else {
+            throw err1;
+          }
+        } catch (err2) {
+          isScanning = false;
+          isStarting = false;
+          hud.style.display = "none";
+          fallback.classList.add("show");
+          fallbackMsg.innerHTML = "<strong>Chạm vào đây hoặc bấm nút xanh bên dưới</strong><br>để bật Camera quét mã";
+          btn.innerHTML = "📷 Bấm Để Mở Camera";
+          btn.classList.add("active-start");
+        }
       }
+    }
+
+    function onCameraStarted() {
+      isScanning = true;
+      isStarting = false;
+      document.getElementById("camFallback").classList.remove("show");
+      document.getElementById("scanHud").style.display = "flex";
+      const btn = document.getElementById("btnToggleCam");
+      btn.innerHTML = "⏹ Tạm tắt Camera";
+      btn.classList.remove("active-start");
     }
 
     async function stopCamera() {
@@ -454,9 +483,10 @@
         try { await html5QrCode.stop(); } catch (e) {}
       }
       isScanning = false;
+      isStarting = false;
       hud.style.display = "none";
       fallback.classList.add("show");
-      fallbackMsg.textContent = "Camera đang tạm tắt";
+      fallbackMsg.textContent = "Camera đang tạm tắt — Chạm để bật lại";
       btn.innerHTML = "📷 Bật Camera Quét Mã";
       btn.classList.add("active-start");
     }
