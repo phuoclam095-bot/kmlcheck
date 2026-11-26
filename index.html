@@ -48,12 +48,13 @@
     .header h1 { font-size: 20px; font-weight: 800; color: #0f172a; }
     .header p { font-size: 13px; color: #64748b; margin-top: 3px; }
 
-    /* KHUNG CAMERA NHỎ GỌN CHUẨN QUÉT MÃ VẠCH & QR */
+    /* KHUNG CAMERA HIỆN ĐẠI VỚI 4 GÓC NGẮM & TIA LASER */
     .scanner-wrapper {
       position: relative;
       width: 100%;
-      height: 175px;
-      border-radius: 16px;
+      aspect-ratio: 4 / 3;
+      max-height: 290px;
+      border-radius: 18px;
       overflow: hidden;
       background: #0f172a;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
@@ -63,22 +64,16 @@
       height: 100% !important;
       border: none !important;
     }
-    #reader__scan_region {
-      width: 100% !important;
-      height: 100% !important;
-    }
     #reader video {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
-      border-radius: 16px;
-      display: block !important;
+      border-radius: 18px;
     }
     /* Ẩn khung quét thô mặc định của html5-qrcode */
     #reader__scan_region img,
     #reader__dashboard,
-    #qr-shaded-region,
-    #reader video::-webkit-media-controls {
+    #qr-shaded-region {
       display: none !important;
     }
 
@@ -91,25 +86,25 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.42) 100%);
+      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.45) 100%);
     }
     .viewfinder {
       position: relative;
-      width: 82%;
-      height: 64%;
-      border-radius: 12px;
+      width: 72%;
+      height: 62%;
+      border-radius: 14px;
     }
     .corner {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       border-color: #22c55e;
       border-style: solid;
     }
-    .c-tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-top-left-radius: 10px; }
-    .c-tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-top-right-radius: 10px; }
-    .c-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-bottom-left-radius: 10px; }
-    .c-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-bottom-right-radius: 10px; }
+    .c-tl { top: 0; left: 0; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 12px; }
+    .c-tr { top: 0; right: 0; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 12px; }
+    .c-bl { bottom: 0; left: 0; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 12px; }
+    .c-br { bottom: 0; right: 0; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 12px; }
 
     .laser-line {
       position: absolute;
@@ -122,12 +117,12 @@
     }
     .scan-hint-pill {
       position: absolute;
-      bottom: 8px;
+      bottom: 10px;
       background: rgba(15, 23, 42, 0.72);
       backdrop-filter: blur(4px);
       color: #f8fafc;
-      font-size: 11px;
-      padding: 4px 10px;
+      font-size: 12px;
+      padding: 5px 12px;
       border-radius: 99px;
       font-weight: 500;
     }
@@ -140,12 +135,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 14px;
+      padding: 20px;
       text-align: center;
       color: #e2e8f0;
       background: #0f172a;
-      gap: 6px;
-      font-size: 13px;
+      gap: 10px;
+      font-size: 13.5px;
     }
     .cam-fallback.show { display: flex; }
 
@@ -264,6 +259,12 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
+    .viewfinder {
+      position: relative;
+      width: 84%;
+      height: 58%;
+      border-radius: 14px;
+    }
   </style>
 </head>
 <body>
@@ -275,7 +276,7 @@
       <p>Đưa mã QR hoặc mã vạch vào khung bên dưới</p>
     </div>
 
-    <!-- Khung Camera nhỏ gọn chuẩn quét mã vạch -->
+    <!-- Khung Camera tự mở & giao diện ngắm hiện đại -->
     <div class="scanner-wrapper">
       <div id="reader"></div>
 
@@ -291,7 +292,7 @@
       </div>
 
       <div id="camFallback" class="cam-fallback">
-        <div style="font-size:24px;">📷</div>
+        <div style="font-size:28px;">📷</div>
         <div id="camFallbackMsg">Đang khởi động camera...</div>
       </div>
     </div>
@@ -357,32 +358,13 @@
     let html5QrCode = null;
     let isScanning = false;
 
-    // Ép mọi thẻ <video> do html5-qrcode tạo ra chạy inline bên trong khung nhỏ (chống Zalo iOS mở thêm camera lớn)
-    const readerObserver = new MutationObserver(() => {
-      const vid = document.querySelector("#reader video");
-      if (vid && !vid.dataset.inlinePatched) {
-        vid.dataset.inlinePatched = "1";
-        vid.setAttribute("playsinline", "true");
-        vid.setAttribute("webkit-playsinline", "true");
-        vid.playsInline = true;
-        vid.muted = true;
-        vid.addEventListener("pause", () => {
-          if (isScanning) vid.play().catch(() => {});
-        });
-      }
-    });
-
     window.addEventListener("DOMContentLoaded", () => {
-      const readerEl = document.getElementById("reader");
-      if (readerEl) {
-        readerObserver.observe(readerEl, { childList: true, subtree: true });
-      }
-
       const params = new URLSearchParams(window.location.search);
       const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
       if (codeFromUrl && codeFromUrl.trim()) {
         verifyCode(codeFromUrl.trim());
       } else {
+        // Tự động mở camera ngay khi vào trang
         startCamera();
       }
     });
@@ -398,6 +380,7 @@
       fallbackMsg.textContent = "Đang khởi động camera...";
 
       if (!html5QrCode) {
+        // Kích hoạt bộ giải mã phần cứng BarcodeDetector của thiết bị để bắt mã vạch cực nhanh
         html5QrCode = new Html5Qrcode("reader", {
           experimentalFeatures: {
             useBarCodeDetectorIfSupported: true
@@ -419,10 +402,12 @@
           { facingMode: "environment" },
           {
             fps: 25,
+            // Mở rộng vùng quét ngang 88% để đọc trọn vẹn các vạch sọc EAN-13
             qrbox: (vw, vh) => ({
-              width: Math.floor(vw * 0.85),
-              height: Math.floor(vh * 0.65)
+              width: Math.floor(vw * 0.88),
+              height: Math.floor(vh * 0.58)
             }),
+            // Ép độ phân giải HD & lấy nét liên tục để vạch nhỏ không bị nhòe
             videoConstraints: {
               facingMode: "environment",
               width: { ideal: 1280 },
@@ -691,6 +676,7 @@
       if (window.history.replaceState && window.location.search) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+      // Đóng kết quả xong tự bật lại camera để quét tiếp mã khác
       startCamera();
     }
 
