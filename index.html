@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Xác Thực Sản Phẩm Chính Hãng - KML Beauty</title>
-  <!-- Thư viện ZXing chuyên giải mã siêu nhạy cả Mã Vạch 1D (EAN-13) & QR Code trên iOS/Android -->
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     html, body {
@@ -49,69 +48,50 @@
     .header h1 { font-size: 20px; font-weight: 800; color: #0f172a; }
     .header p { font-size: 13px; color: #64748b; margin-top: 3px; }
 
-    /* Hộp hướng dẫn gọn trước khi bật camera */
-    .scan-intro-box {
-      background: #f8fafc;
-      border: 1.5px dashed #cbd5e1;
-      border-radius: 18px;
-      padding: 26px 16px;
-      text-align: center;
-      color: #475569;
-      font-size: 13.5px;
-      line-height: 1.5;
-      cursor: pointer;
-    }
-    .scan-intro-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-
-    /* KHUNG CAMERA INLINE TRÊN ZALO IOS (Không dùng display:none để tránh bung fullscreen) */
+    /* KHUNG CAMERA HIỆN ĐẠI VỚI 4 GÓC NGẮM & TIA LASER */
     .scanner-wrapper {
       position: relative;
       width: 100%;
-      height: 0;
-      opacity: 0;
-      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      max-height: 290px;
       border-radius: 18px;
+      overflow: hidden;
       background: #0f172a;
-      transition: opacity 0.2s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     }
-    .scanner-wrapper.active {
-      height: 260px;
-      opacity: 1;
+    #reader {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
     }
-
-    #camVideo {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      background: #0f172a;
+    #reader video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 18px;
     }
-    #camVideo::-webkit-media-controls,
-    #camVideo::-webkit-media-controls-enclosure,
-    #camVideo::-webkit-media-controls-panel,
-    #camVideo::-webkit-media-controls-play-button,
-    #camVideo::-webkit-media-controls-start-playback-button {
+    /* Ẩn khung quét thô mặc định của html5-qrcode */
+    #reader__scan_region img,
+    #reader__dashboard,
+    #qr-shaded-region {
       display: none !important;
-      -webkit-appearance: none !important;
     }
 
+    /* Lớp phủ khung ngắm thẩm mỹ */
     .scan-hud {
       position: absolute;
       inset: 0;
-      z-index: 5;
       pointer-events: none;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.42) 100%);
+      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.45) 100%);
     }
     .viewfinder {
       position: relative;
-      width: 84%;
-      height: 58%;
+      width: 72%;
+      height: 62%;
       border-radius: 14px;
     }
     .corner {
@@ -147,25 +127,45 @@
       font-weight: 500;
     }
 
-    .btn-primary {
+    /* Trạng thái chờ cấp quyền camera */
+    .cam-fallback {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      color: #e2e8f0;
+      background: #0f172a;
+      gap: 10px;
+      font-size: 13.5px;
+    }
+    .cam-fallback.show { display: flex; }
+
+    .btn-cam-ctrl {
       width: 100%;
-      padding: 14px;
-      border: none;
+      padding: 12px;
+      border: 1.5px solid #e2e8f0;
       border-radius: 12px;
-      background: #16a34a;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 14px;
+      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       transition: 0.2s;
     }
-    .btn-primary:active { transform: scale(0.98); background: #15803d; }
-    .btn-stop { background: #ef4444; }
+    .btn-cam-ctrl.active-start {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: #fff;
+    }
 
     /* Nhập mã thủ công */
     .manual-box { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2e8f0; }
@@ -244,7 +244,6 @@
       font-size: clamp(9.5px, 2.65vw, 12.5px);
       letter-spacing: -0.25px;
     }
-
     .detail-section { margin-top: 15px; padding-top: 13px; border-top: 1px solid #f1f5f9; }
     .detail-section h3 { font-size: 13.5px; font-weight: 700; color: #0f172a; text-transform: uppercase; margin-bottom: 5px; }
     .detail-section p { font-size: 13.5px; color: #334155; line-height: 1.55; white-space: pre-line; }
@@ -260,6 +259,12 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
+    .viewfinder {
+      position: relative;
+      width: 84%;
+      height: 58%;
+      border-radius: 14px;
+    }
   </style>
 </head>
 <body>
@@ -271,15 +276,9 @@
       <p>Đưa mã QR hoặc mã vạch vào khung bên dưới</p>
     </div>
 
-    <!-- Hộp hướng dẫn gọn trước khi bấm bật camera -->
-    <div id="scanIntroBox" class="scan-intro-box" onclick="toggleCamera()">
-      <span class="scan-intro-icon">📷</span>
-      Bấm nút bên dưới để mở camera quét <strong>mã QR xác thực</strong> hoặc <strong>mã vạch sọc</strong> trên sản phẩm
-    </div>
-
-    <!-- Khung Camera Inline 100% trên Zalo iOS -->
-    <div class="scanner-wrapper" id="scannerWrapper">
-      <video id="camVideo" autoplay playsinline webkit-playsinline="true" muted disablePictureInPicture></video>
+    <!-- Khung Camera tự mở & giao diện ngắm hiện đại -->
+    <div class="scanner-wrapper">
+      <div id="reader"></div>
 
       <div id="scanHud" class="scan-hud">
         <div class="viewfinder">
@@ -291,10 +290,15 @@
         </div>
         <div class="scan-hint-pill">Canh mã QR hoặc mã vạch vào giữa khung</div>
       </div>
+
+      <div id="camFallback" class="cam-fallback">
+        <div style="font-size:28px;">📷</div>
+        <div id="camFallbackMsg">Đang khởi động camera...</div>
+      </div>
     </div>
 
-    <button id="btnToggleCam" class="btn-primary" onclick="toggleCamera()">
-      📷 Mở Camera Quét Mã
+    <button id="btnToggleCam" class="btn-cam-ctrl" onclick="toggleCamera()">
+      ⏹ Tạm tắt Camera
     </button>
 
     <!-- Nhập mã thủ công -->
@@ -351,108 +355,117 @@
     const DEFAULT_COMPANY_NAME = "CTY TNHH MTV THƯƠNG MẠI KML BEAUTY";
     const COMPANY_TAX_CODE = "1900685492";
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const video = document.getElementById("camVideo");
-      video.setAttribute("playsinline", "true");
-      video.setAttribute("webkit-playsinline", "true");
-      video.playsInline = true;
-      video.muted = true;
+    let html5QrCode = null;
+    let isScanning = false;
 
+    window.addEventListener("DOMContentLoaded", () => {
       const params = new URLSearchParams(window.location.search);
       const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
       if (codeFromUrl && codeFromUrl.trim()) {
         verifyCode(codeFromUrl.trim());
+      } else {
+        // Tự động mở camera ngay khi vào trang
+        startCamera();
       }
     });
 
-    let zxingReader = null;
-    let isScanning = false;
-
-    function stopScanner() {
-      isScanning = false;
-      if (zxingReader) {
-        try { zxingReader.reset(); } catch (e) {}
-      }
-      const video = document.getElementById("camVideo");
-      if (video && video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-        video.srcObject = null;
-      }
-    }
-
-    async function toggleCamera() {
+    async function startCamera() {
+      if (isScanning) return;
       const btn = document.getElementById("btnToggleCam");
-      const introBox = document.getElementById("scanIntroBox");
-      const scannerWrapper = document.getElementById("scannerWrapper");
-      const video = document.getElementById("camVideo");
+      const fallback = document.getElementById("camFallback");
+      const fallbackMsg = document.getElementById("camFallbackMsg");
+      const hud = document.getElementById("scanHud");
 
-      if (isScanning) {
-        stopScanner();
-        scannerWrapper.classList.remove("active");
-        introBox.style.display = "block";
-        btn.innerHTML = "📷 Mở Camera Quét Mã";
-        btn.classList.remove("btn-stop");
-        return;
+      fallback.classList.add("show");
+      fallbackMsg.textContent = "Đang khởi động camera...";
+
+      if (!html5QrCode) {
+        // Kích hoạt bộ giải mã phần cứng BarcodeDetector của thiết bị để bắt mã vạch cực nhanh
+        html5QrCode = new Html5Qrcode("reader", {
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E
+          ],
+          verbose: false
+        });
       }
 
       try {
-        video.setAttribute("playsinline", "true");
-        video.setAttribute("webkit-playsinline", "true");
-        video.playsInline = true;
-        video.muted = true;
-
-        // Mở khung ngay trong thao tác bấm để iOS Zalo giữ video inline
-        introBox.style.display = "none";
-        scannerWrapper.classList.add("active");
-
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-          ZXing.BarcodeFormat.QR_CODE,
-          ZXing.BarcodeFormat.EAN_13,
-          ZXing.BarcodeFormat.EAN_8,
-          ZXing.BarcodeFormat.CODE_128,
-          ZXing.BarcodeFormat.UPC_A,
-          ZXing.BarcodeFormat.UPC_E
-        ]);
-
-        zxingReader = new ZXing.BrowserMultiFormatReader(hints, 150);
-
-        const constraints = {
-          audio: false,
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }
-        };
-
-        isScanning = true;
-        btn.innerHTML = "⏹ Tắt Camera";
-        btn.classList.add("btn-stop");
-
-        await zxingReader.decodeFromConstraints(constraints, "camVideo", (result, err) => {
-          if (!isScanning) return;
-          if (result && result.getText()) {
-            let extractedCode = result.getText().trim();
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 25,
+            // Mở rộng vùng quét ngang 88% để đọc trọn vẹn các vạch sọc EAN-13
+            qrbox: (vw, vh) => ({
+              width: Math.floor(vw * 0.88),
+              height: Math.floor(vh * 0.58)
+            }),
+            // Ép độ phân giải HD & lấy nét liên tục để vạch nhỏ không bị nhòe
+            videoConstraints: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: { ideal: "continuous" }
+            }
+          },
+          (decodedText) => {
+            let extractedCode = decodedText;
             try {
-              if (extractedCode.startsWith("http")) {
-                const urlObj = new URL(extractedCode);
-                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
+              if (decodedText.startsWith("http")) {
+                const urlObj = new URL(decodedText);
+                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
               }
             } catch (e) {}
 
-            toggleCamera();
-            verifyCode(extractedCode);
+            stopCamera();
+            verifyCode(extractedCode.trim());
           }
-        });
+        );
+
+        isScanning = true;
+        fallback.classList.remove("show");
+        hud.style.display = "flex";
+        btn.innerHTML = "⏹ Tạm tắt Camera";
+        btn.classList.remove("active-start");
       } catch (err) {
-        stopScanner();
-        scannerWrapper.classList.remove("active");
-        introBox.style.display = "block";
-        btn.innerHTML = "📷 Mở Camera Quét Mã";
-        btn.classList.remove("btn-stop");
-        alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
+        isScanning = false;
+        hud.style.display = "none";
+        fallback.classList.add("show");
+        fallbackMsg.textContent = "Bấm nút xanh bên dưới để cấp quyền mở Camera quét mã";
+        btn.innerHTML = "📷 Bật Camera Quét Mã";
+        btn.classList.add("active-start");
+      }
+    }
+
+    async function stopCamera() {
+      const btn = document.getElementById("btnToggleCam");
+      const fallback = document.getElementById("camFallback");
+      const fallbackMsg = document.getElementById("camFallbackMsg");
+      const hud = document.getElementById("scanHud");
+
+      if (html5QrCode && isScanning) {
+        try { await html5QrCode.stop(); } catch (e) {}
+      }
+      isScanning = false;
+      hud.style.display = "none";
+      fallback.classList.add("show");
+      fallbackMsg.textContent = "Camera đang tạm tắt";
+      btn.innerHTML = "📷 Bật Camera Quét Mã";
+      btn.classList.add("active-start");
+    }
+
+    function toggleCamera() {
+      if (isScanning) {
+        stopCamera();
+      } else {
+        startCamera();
       }
     }
 
@@ -663,6 +676,8 @@
       if (window.history.replaceState && window.location.search) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+      // Đóng kết quả xong tự bật lại camera để quét tiếp mã khác
+      startCamera();
     }
 
     function closeModalOnBg(e) {
