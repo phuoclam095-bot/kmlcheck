@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Quản Trị Sản Phẩm & Tem QR KML Beauty</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- Thư viện tạo mã QR tĩnh trực tiếp trên trình duyệt (không phụ thuộc server ngoài) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f1f5f9; color: #0f172a; padding: 14px; display: flex; justify-content: center; }
@@ -47,9 +49,13 @@
     .tab-btn { padding: 10px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; }
     .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 
-    .qr-preview { margin-top: 16px; padding: 16px; border: 1.5px dashed #16a34a; border-radius: 14px; text-align: center; background: #f0fdf4; display: none; }
-    .qr-preview img { width: 200px; height: 200px; border-radius: 10px; background: #fff; padding: 8px; border: 1px solid #bbf7d0; }
-    .qr-preview p { font-size: 12.5px; color: #166534; margin-top: 8px; word-break: break-all; }
+    /* Khung hiển thị QR trực tiếp */
+    .qr-live-box { margin-bottom: 16px; padding: 16px; border: 1.5px solid #bbf7d0; border-radius: 14px; text-align: center; background: #f0fdf4; }
+    .qr-live-title { font-size: 13px; font-weight: 700; color: #15803d; margin-bottom: 10px; text-transform: uppercase; }
+    #qrcodeCanvasWrap { display: inline-flex; justify-content: center; align-items: center; background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #86efac; box-shadow: 0 4px 12px rgba(22,163,74,0.08); }
+    #qrcodeCanvasWrap img, #qrcodeCanvasWrap canvas { display: block; width: 200px; height: 200px; }
+    .qr-link-text { font-size: 12.5px; color: #166534; margin-top: 10px; font-weight: 600; word-break: break-all; background: #fff; padding: 7px 10px; border-radius: 8px; border: 1px solid #dcfce7; }
+    .btn-download-png { display: inline-block; margin-top: 10px; padding: 9px 16px; background: #0f172a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 
     .cam-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
     .cam-modal.show { display: flex; }
@@ -169,12 +175,20 @@
         <button id="btnSaveProd" class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
       </div>
 
-      <!-- TAB 2: LƯU / SỬA MÃ QR XÁC THỰC CÔNG TY VÀO DATABASE -->
+      <!-- TAB 2: HIỂN THỊ QR TRỰC TIẾP & LƯU VÀO DATABASE -->
       <div id="formQr" style="display:none;">
+        <!-- KHUNG MÃ QR HIỆN SẴN NGAY LÚC SETUP -->
+        <div class="qr-live-box">
+          <div class="qr-live-title">Xem trước mã QR tĩnh (Tự cập nhật khi nhập)</div>
+          <div id="qrcodeCanvasWrap"></div>
+          <div id="qrLinkPreview" class="qr-link-text"></div>
+          <button type="button" class="btn-download-png" onclick="downloadQrPng()">⬇️ Tải Ảnh QR Về Máy (PNG)</button>
+        </div>
+
         <div class="form-group">
           <label>Mã QR định danh (Lưu vào Database) *</label>
           <div class="input-with-scan">
-            <input type="text" id="qCode" value="KML-BEAUTY-AUTH" placeholder="VD: KML-BEAUTY-AUTH" />
+            <input type="text" id="qCode" value="KML-BEAUTY-AUTH" oninput="renderLiveQr()" placeholder="VD: KML-BEAUTY-AUTH" />
             <button type="button" class="btn-scan" onclick="openScanner('qCode')">📷 Quét QR</button>
           </div>
         </div>
@@ -194,13 +208,7 @@
           <textarea id="qNote">Cảm ơn Quý khách đã tin dùng sản phẩm chính hãng của KML Beauty. Quý khách có thể quét tiếp mã vạch sọc trên vỏ hộp để xem thông tin chi tiết từng sản phẩm.</textarea>
         </div>
 
-        <button class="btn-submit" onclick="saveQrCode()">💾 Lưu Mã QR Vào Database & Tạo Ảnh</button>
-
-        <div id="qrPreviewBox" class="qr-preview">
-          <img id="qrPreviewImg" src="" alt="Mã QR tĩnh" />
-          <p id="qrPreviewLink"></p>
-          <a id="qrDownloadBtn" href="" download="QR-KML-Beauty.png" target="_blank" style="display:inline-block; margin-top:10px; padding:9px 16px; background:#0f172a; color:#fff; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">⬇️ Tải Ảnh QR Tĩnh Để In Tem</a>
-        </div>
+        <button id="btnSaveQr" class="btn-submit" onclick="saveQrCode()">💾 Lưu Mã QR Vào Database</button>
       </div>
     </div>
   </div>
@@ -222,9 +230,10 @@
   let creds = { username: "", password: "" };
   let targetInputId = null;
   let scannerInstance = null;
-  let productImages = []; // Mảng lưu nhiều ảnh (Base64 nén hoặc URL)
+  let productImages = [];
 
   window.addEventListener("DOMContentLoaded", () => {
+    renderLiveQr(); // Vẽ sẵn mã QR ngay khi load trang
     const saved = sessionStorage.getItem("kml_admin_creds");
     if (saved) {
       creds = JSON.parse(saved);
@@ -233,7 +242,49 @@
   });
 
   // =========================================================================
-  // XỬ LÝ CHỌN NHIỀU ẢNH TỪ MÁY & TỰ ĐỘNG NÉN NHẸ ĐỂ LƯU DB MƯỢT
+  // TẠO & TẢI MÃ QR TRỰC TIẾP TRONG TRÌNH DUYỆT (HIỆN TỨC THÌ)
+  // =========================================================================
+  function renderLiveQr() {
+    const codeVal = (document.getElementById("qCode").value || "").trim() || "KML-BEAUTY-AUTH";
+    const fullLink = `${PUBLIC_CHECK_URL}?code=${encodeURIComponent(codeVal)}`;
+    document.getElementById("qrLinkPreview").textContent = fullLink;
+
+    const wrap = document.getElementById("qrcodeCanvasWrap");
+    wrap.innerHTML = "";
+    new QRCode(wrap, {
+      text: fullLink,
+      width: 400,
+      height: 400,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+
+  function downloadQrPng() {
+    const wrap = document.getElementById("qrcodeCanvasWrap");
+    const canvas = wrap.querySelector("canvas");
+    const img = wrap.querySelector("img");
+    const codeVal = (document.getElementById("qCode").value || "").trim() || "KML-BEAUTY-AUTH";
+
+    let dataUrl = "";
+    if (canvas) {
+      dataUrl = canvas.toDataURL("image/png");
+    } else if (img && img.src) {
+      dataUrl = img.src;
+    }
+
+    if (!dataUrl) return alert("Chưa tạo được ảnh QR!");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `QR-${codeVal}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // =========================================================================
+  // XỬ LÝ CHỌN NHIỀU ẢNH TỪ MÁY & TỰ ĐỘNG NÉN NHẸ
   // =========================================================================
   async function handleFilesSelected(event) {
     const files = Array.from(event.target.files || []);
@@ -324,6 +375,7 @@
         document.getElementById("loginView").style.display = "none";
         document.getElementById("adminView").style.display = "block";
         document.getElementById("welcomeText").textContent = "Xin chào, " + (res.full_name || creds.username);
+        renderLiveQr();
       } else {
         sessionStorage.removeItem("kml_admin_creds");
         if (!silent) alert(res?.message || "Đăng nhập thất bại!");
@@ -345,6 +397,7 @@
     document.getElementById("tabQr").classList.toggle("active", tab === "qr");
     document.getElementById("formProduct").style.display = tab === "prod" ? "block" : "none";
     document.getElementById("formQr").style.display = tab === "qr" ? "block" : "none";
+    if (tab === "qr") renderLiveQr();
   }
 
   async function saveProduct() {
@@ -356,7 +409,6 @@
     btn.disabled = true;
     btn.textContent = "⏳ Đang lưu dữ liệu & hình ảnh...";
 
-    // Lưu mảng ảnh dưới dạng chuỗi JSON (hoặc chuỗi rỗng nếu không có ảnh)
     const imagePayload = productImages.length > 0 ? JSON.stringify(productImages) : "";
 
     const payload = {
@@ -386,30 +438,30 @@
   }
 
   async function saveQrCode() {
+    const qrCodeVal = document.getElementById("qCode").value.trim();
+    if (!qrCodeVal) return alert("Vui lòng nhập Mã QR định danh!");
+
+    const btn = document.getElementById("btnSaveQr");
+    btn.disabled = true;
+    btn.textContent = "⏳ Đang lưu mã QR...";
+
     const payload = {
       action: "save_qr",
-      qr_code: document.getElementById("qCode").value.trim(),
+      qr_code: qrCodeVal,
       company_name: document.getElementById("qCompany").value.trim(),
       website: document.getElementById("qWebsite").value.trim(),
       note: document.getElementById("qNote").value.trim()
     };
 
-    if (!payload.qr_code) return alert("Vui lòng nhập Mã QR định danh!");
-
     try {
       const res = await callAdminApi(payload);
-      alert(res.message);
-
-      if (res.authenticated && res.message.includes("thành công")) {
-        const fullLink = `${PUBLIC_CHECK_URL}?code=${encodeURIComponent(payload.qr_code)}`;
-        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(fullLink)}`;
-        document.getElementById("qrPreviewImg").src = qrImgUrl;
-        document.getElementById("qrPreviewLink").textContent = fullLink;
-        document.getElementById("qrDownloadBtn").href = qrImgUrl;
-        document.getElementById("qrPreviewBox").style.display = "block";
-      }
+      renderLiveQr();
+      alert(res?.message || "Đã lưu mã QR!");
     } catch (e) {
       alert("Lỗi khi lưu mã QR!");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "💾 Lưu Mã QR Vào Database";
     }
   }
 
@@ -443,6 +495,7 @@
 
           if (targetInputId) {
             document.getElementById(targetInputId).value = cleanVal;
+            if (targetInputId === "qCode") renderLiveQr();
           }
           closeScanner();
         }
