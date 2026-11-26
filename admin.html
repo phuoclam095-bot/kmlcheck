@@ -30,6 +30,17 @@
     .btn-submit { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
     .btn-submit:active { background: #15803d; }
 
+    /* Khu vực Upload nhiều ảnh */
+    .upload-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 14px; text-align: center; background: #f8fafc; cursor: pointer; transition: 0.2s; }
+    .upload-zone:hover { border-color: #16a34a; background: #f0fdf4; }
+    .upload-zone p { font-size: 13.5px; color: #334155; font-weight: 600; }
+    .upload-zone span { font-size: 12px; color: #64748b; display: block; margin-top: 3px; }
+
+    .img-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .img-item { position: relative; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; }
+    .img-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-item .btn-del-img { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
     .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .btn-logout { background: #fee2e2; color: #dc2626; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
     .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
@@ -118,9 +129,21 @@
           </div>
         </div>
 
+        <!-- CHỌN NHIỀU ẢNH TỪ MÁY TÍNH / ĐIỆN THOẠI HOẶC LINK -->
         <div class="form-group">
-          <label>Link hình ảnh sản phẩm</label>
-          <input type="text" id="pImg" placeholder="https://..." />
+          <label>Hình ảnh sản phẩm (Chọn được nhiều ảnh từ máy)</label>
+          <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" onchange="handleFilesSelected(event)" />
+          <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <p>🖼️ Bấm để chọn nhiều ảnh từ điện thoại / máy tính</p>
+            <span>Hỗ trợ chọn cùng lúc nhiều ảnh (JPG, PNG, WEBP)</span>
+          </div>
+
+          <div class="input-with-scan" style="margin-top:8px;">
+            <input type="text" id="pImgUrlInput" placeholder="Hoặc dán thêm link ảnh (https://...)" />
+            <button type="button" class="btn-scan" onclick="addImageUrl()">+ Thêm link</button>
+          </div>
+
+          <div id="imgPreviewGrid" class="img-preview-grid"></div>
         </div>
 
         <div class="form-group">
@@ -143,7 +166,7 @@
           <textarea id="pStorage" placeholder="VD: Tránh ánh nắng trực tiếp, để nơi khô ráo..."></textarea>
         </div>
 
-        <button class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
+        <button id="btnSaveProd" class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
       </div>
 
       <!-- TAB 2: LƯU / SỬA MÃ QR XÁC THỰC CÔNG TY VÀO DATABASE -->
@@ -199,6 +222,7 @@
   let creds = { username: "", password: "" };
   let targetInputId = null;
   let scannerInstance = null;
+  let productImages = []; // Mảng lưu nhiều ảnh (Base64 nén hoặc URL)
 
   window.addEventListener("DOMContentLoaded", () => {
     const saved = sessionStorage.getItem("kml_admin_creds");
@@ -208,6 +232,74 @@
     }
   });
 
+  // =========================================================================
+  // XỬ LÝ CHỌN NHIỀU ẢNH TỪ MÁY & TỰ ĐỘNG NÉN NHẸ ĐỂ LƯU DB MƯỢT
+  // =========================================================================
+  async function handleFilesSelected(event) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) continue;
+      const compressedDataUrl = await compressImage(file, 900, 0.78);
+      productImages.push(compressedDataUrl);
+    }
+    event.target.value = "";
+    renderImageGrid();
+  }
+
+  function compressImage(file, maxWidth = 900, quality = 0.78) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth) {
+            h = Math.round((h * maxWidth) / w);
+            w = maxWidth;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addImageUrl() {
+    const inp = document.getElementById("pImgUrlInput");
+    const url = inp.value.trim();
+    if (!url) return;
+    productImages.push(url);
+    inp.value = "";
+    renderImageGrid();
+  }
+
+  function removeImage(index) {
+    productImages.splice(index, 1);
+    renderImageGrid();
+  }
+
+  function renderImageGrid() {
+    const grid = document.getElementById("imgPreviewGrid");
+    grid.innerHTML = productImages.map((src, idx) => `
+      <div class="img-item">
+        <img src="${src}" alt="Ảnh ${idx + 1}" />
+        <button type="button" class="btn-del-img" onclick="removeImage(${idx})" title="Xóa ảnh">×</button>
+      </div>
+    `).join("");
+  }
+
+  // =========================================================================
+  // API ĐĂNG NHẬP & LƯU DỮ LIỆU
+  // =========================================================================
   async function callAdminApi(payload) {
     const res = await fetch(ADMIN_WEBHOOK_URL, {
       method: "POST",
@@ -256,28 +348,40 @@
   }
 
   async function saveProduct() {
+    const barcode = document.getElementById("pBarcode").value.trim();
+    const name = document.getElementById("pName").value.trim();
+    if (!barcode || !name) return alert("Vui lòng nhập Mã vạch và Tên sản phẩm!");
+
+    const btn = document.getElementById("btnSaveProd");
+    btn.disabled = true;
+    btn.textContent = "⏳ Đang lưu dữ liệu & hình ảnh...";
+
+    // Lưu mảng ảnh dưới dạng chuỗi JSON (hoặc chuỗi rỗng nếu không có ảnh)
+    const imagePayload = productImages.length > 0 ? JSON.stringify(productImages) : "";
+
     const payload = {
       action: "save_product",
-      barcode: document.getElementById("pBarcode").value.trim(),
-      name: document.getElementById("pName").value.trim(),
+      barcode,
+      name,
       price: document.getElementById("pPrice").value.trim(),
       weight: document.getElementById("pWeight").value.trim(),
       origin: document.getElementById("pOrigin").value.trim(),
       brand_owner: document.getElementById("pBrand").value.trim(),
-      image_url: document.getElementById("pImg").value.trim(),
+      image_url: imagePayload,
       ingredients: document.getElementById("pIngredients").value.trim(),
       uses: document.getElementById("pUses").value.trim(),
       usage_instructions: document.getElementById("pUsage").value.trim(),
       storage_instructions: document.getElementById("pStorage").value.trim()
     };
 
-    if (!payload.barcode || !payload.name) return alert("Vui lòng nhập Mã vạch và Tên sản phẩm!");
-
     try {
       const res = await callAdminApi(payload);
       alert(res.message);
     } catch (e) {
-      alert("Lỗi khi lưu sản phẩm!");
+      alert("Lỗi khi lưu sản phẩm! Kiểm tra kết nối mạng.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "💾 Lưu Thông Tin Sản Phẩm";
     }
   }
 
