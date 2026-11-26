@@ -218,19 +218,31 @@
     .meta-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .meta-label { color: #64748b; white-space: nowrap; flex-shrink: 0; }
     .meta-val { font-weight: 600; color: #0f172a; text-align: right; }
-    .meta-row-col {
+    .meta-row {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 3px;
-      padding: 2px 0;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+    .meta-label {
+      color: #64748b;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-size: 12.5px;
+    }
+    .meta-val {
+      font-weight: 600;
+      color: #0f172a;
+      text-align: right;
+      min-width: 0;
     }
     .meta-company {
-      font-weight: 700;
-      color: #0f172a;
-      font-size: 13px;
-      line-height: 1.35;
-      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: clamp(9.5px, 2.55vw, 12.5px);
+      letter-spacing: -0.3px;
     }
 
     .detail-section { margin-top: 15px; padding-top: 13px; border-top: 1px solid #f1f5f9; }
