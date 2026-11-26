@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Quản Trị Sản Phẩm & Tem QR KML Beauty</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <!-- Thư viện tạo mã QR tĩnh trực tiếp trên trình duyệt (không phụ thuộc server ngoài) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f1f5f9; color: #0f172a; padding: 14px; display: flex; justify-content: center; }
-    .app { width: 100%; max-width: 560px; }
+    .app { width: 100%; max-width: 580px; }
 
     .card { background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); margin-bottom: 16px; }
     h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
@@ -20,6 +19,7 @@
     label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px; }
     input, textarea { width: 100%; padding: 11px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14.5px; outline: none; background: #fff; }
     input:focus, textarea:focus { border-color: #16a34a; }
+    input[readonly] { background: #f1f5f9; color: #475569; cursor: not-allowed; }
     textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
 
     .input-with-scan { display: flex; gap: 8px; }
@@ -32,6 +32,11 @@
     .btn-submit { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
     .btn-submit:active { background: #15803d; }
 
+    /* Banner chế độ đang chỉnh sửa */
+    .edit-banner { display: none; justify-content: space-between; align-items: center; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+    .edit-banner.show { display: flex; }
+    .btn-cancel-edit { background: #fff; border: 1px solid #d97706; color: #b45309; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
     /* Khu vực Upload nhiều ảnh */
     .upload-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 14px; text-align: center; background: #f8fafc; cursor: pointer; transition: 0.2s; }
     .upload-zone:hover { border-color: #16a34a; background: #f0fdf4; }
@@ -43,8 +48,11 @@
     .img-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .img-item .btn-del-img { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .btn-logout { background: #fee2e2; color: #dc2626; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+    .top-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-list-sp { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 7px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .btn-logout { background: #fee2e2; color: #dc2626; border: none; padding: 7px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+
     .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
     .tab-btn { padding: 10px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; }
     .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
@@ -57,11 +65,31 @@
     .qr-link-text { font-size: 12.5px; color: #166534; margin-top: 10px; font-weight: 600; word-break: break-all; background: #fff; padding: 7px 10px; border-radius: 8px; border: 1px solid #dcfce7; }
     .btn-download-png { display: inline-block; margin-top: 10px; padding: 9px 16px; background: #0f172a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 
-    .cam-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
-    .cam-modal.show { display: flex; }
+    /* MODAL CHUNG (CAMERA & DANH SÁCH SẢN PHẨM) */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; padding: 14px; z-index: 999; }
+    .modal-overlay.show { display: flex; }
+
     .cam-box { width: 100%; max-width: 400px; background: #fff; border-radius: 18px; padding: 16px; text-align: center; }
     #adminReader { width: 100%; border-radius: 12px; overflow: hidden; margin: 12px 0; }
     .btn-close-cam { width: 100%; padding: 11px; border: none; border-radius: 10px; background: #ef4444; color: #fff; font-weight: 600; cursor: pointer; }
+
+    /* MODAL DANH SÁCH SẢN PHẨM */
+    .list-modal-card { width: 100%; max-width: 600px; max-height: 88vh; background: #fff; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+    .list-modal-header { padding: 16px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .list-modal-header h2 { font-size: 17px; font-weight: 700; }
+    .btn-x { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; color: #475569; }
+    .list-search-bar { padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    .list-modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+    .sp-row { display: flex; gap: 12px; align-items: center; padding: 11px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+    .sp-thumb { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; background: #f1f5f9; flex-shrink: 0; border: 1px solid #e2e8f0; }
+    .sp-info { flex: 1; min-width: 0; }
+    .sp-title { font-size: 14.5px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-meta { font-size: 12.5px; color: #64748b; margin-top: 3px; }
+    .sp-price { font-size: 13px; font-weight: 700; color: #16a34a; margin-top: 2px; }
+    .sp-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .btn-edit-sp { padding: 6px 12px; border: none; border-radius: 7px; background: #fef3c7; color: #b45309; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .btn-del-sp { padding: 6px 12px; border: none; border-radius: 7px; background: #fee2e2; color: #dc2626; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -88,9 +116,12 @@
       <div class="topbar">
         <div>
           <h1 id="welcomeText">Xin chào, Admin</h1>
-          <p class="sub" style="margin-bottom:0;">Thêm mới hoặc cập nhật dữ liệu lên Supabase</p>
+          <p class="sub" style="margin-bottom:0;">Thêm mới, chỉnh sửa hoặc xóa sản phẩm</p>
         </div>
-        <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+        <div class="top-actions">
+          <button class="btn-list-sp" onclick="openProductsModal()">📋 Danh sách SP (<span id="spCountBadge">0</span>)</button>
+          <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+        </div>
       </div>
 
       <div class="tabs">
@@ -100,11 +131,16 @@
 
       <!-- TAB 1: THÊM / SỬA SẢN PHẨM MÃ VẠCH -->
       <div id="formProduct">
+        <div id="editBanner" class="edit-banner">
+          <span>✏️ Đang chỉnh sửa mã: <strong id="editingBarcodeLabel"></strong></span>
+          <button type="button" class="btn-cancel-edit" onclick="resetProductForm()">+ Thêm mới</button>
+        </div>
+
         <div class="form-group">
           <label>Mã vạch sản phẩm (Barcode) *</label>
           <div class="input-with-scan">
             <input type="text" id="pBarcode" placeholder="VD: 8938546852123" />
-            <button type="button" class="btn-scan" onclick="openScanner('pBarcode')">📷 Quét mã</button>
+            <button type="button" id="btnScanBarcode" class="btn-scan" onclick="openScanner('pBarcode')">📷 Quét mã</button>
           </div>
         </div>
 
@@ -177,7 +213,6 @@
 
       <!-- TAB 2: HIỂN THỊ QR TRỰC TIẾP & LƯU VÀO DATABASE -->
       <div id="formQr" style="display:none;">
-        <!-- KHUNG MÃ QR HIỆN SẴN NGAY LÚC SETUP -->
         <div class="qr-live-box">
           <div class="qr-live-title">Xem trước mã QR tĩnh (Tự cập nhật khi nhập)</div>
           <div id="qrcodeCanvasWrap"></div>
@@ -214,8 +249,22 @@
   </div>
 </div>
 
+<!-- MODAL DANH SÁCH TẤT CẢ SẢN PHẨM TRONG DATABASE -->
+<div id="productsListModal" class="modal-overlay" onclick="if(event.target.id==='productsListModal') closeProductsModal()">
+  <div class="list-modal-card">
+    <div class="list-modal-header">
+      <h2>Danh Sách Sản Phẩm (<span id="modalTotalSp">0</span>)</h2>
+      <button class="btn-x" onclick="closeProductsModal()">×</button>
+    </div>
+    <div class="list-search-bar">
+      <input type="text" id="searchSpInput" placeholder="🔍 Tìm theo tên sản phẩm hoặc mã vạch..." oninput="renderProductsList()" />
+    </div>
+    <div id="productsListBody" class="list-modal-body"></div>
+  </div>
+</div>
+
 <!-- MODAL CAMERA -->
-<div id="camModal" class="cam-modal">
+<div id="camModal" class="modal-overlay">
   <div class="cam-box">
     <h3 style="font-size:16px;">Đưa mã vạch hoặc QR vào khung</h3>
     <div id="adminReader"></div>
@@ -231,9 +280,10 @@
   let targetInputId = null;
   let scannerInstance = null;
   let productImages = [];
+  let allProducts = [];
 
   window.addEventListener("DOMContentLoaded", () => {
-    renderLiveQr(); // Vẽ sẵn mã QR ngay khi load trang
+    renderLiveQr();
     const saved = sessionStorage.getItem("kml_admin_creds");
     if (saved) {
       creds = JSON.parse(saved);
@@ -242,7 +292,7 @@
   });
 
   // =========================================================================
-  // TẠO & TẢI MÃ QR TRỰC TIẾP TRONG TRÌNH DUYỆT (HIỆN TỨC THÌ)
+  // TẠO & TẢI MÃ QR TRỰC TIẾP TRONG TRÌNH DUYỆT
   // =========================================================================
   function renderLiveQr() {
     const codeVal = (document.getElementById("qCode").value || "").trim() || "KML-BEAUTY-AUTH";
@@ -268,11 +318,8 @@
     const codeVal = (document.getElementById("qCode").value || "").trim() || "KML-BEAUTY-AUTH";
 
     let dataUrl = "";
-    if (canvas) {
-      dataUrl = canvas.toDataURL("image/png");
-    } else if (img && img.src) {
-      dataUrl = img.src;
-    }
+    if (canvas) dataUrl = canvas.toDataURL("image/png");
+    else if (img && img.src) dataUrl = img.src;
 
     if (!dataUrl) return alert("Chưa tạo được ảnh QR!");
     const a = document.createElement("a");
@@ -284,7 +331,7 @@
   }
 
   // =========================================================================
-  // XỬ LÝ CHỌN NHIỀU ẢNH TỪ MÁY & TỰ ĐỘNG NÉN NHẸ
+  // XỬ LÝ NHIỀU ẢNH SẢN PHẨM
   // =========================================================================
   async function handleFilesSelected(event) {
     const files = Array.from(event.target.files || []);
@@ -348,8 +395,18 @@
     `).join("");
   }
 
+  function parseImagesFromProduct(p) {
+    if (!p || !p.image_url) return [];
+    try {
+      const parsed = JSON.parse(p.image_url);
+      return Array.isArray(parsed) ? parsed : [p.image_url];
+    } catch (e) {
+      return [p.image_url];
+    }
+  }
+
   // =========================================================================
-  // API ĐĂNG NHẬP & LƯU DỮ LIỆU
+  // API ĐĂNG NHẬP & QUẢN LÝ DANH SÁCH SẢN PHẨM
   // =========================================================================
   async function callAdminApi(payload) {
     const res = await fetch(ADMIN_WEBHOOK_URL, {
@@ -359,6 +416,13 @@
     });
     const data = await res.json();
     return Array.isArray(data) ? data[0] : data;
+  }
+
+  function syncProductsState(list) {
+    allProducts = Array.isArray(list) ? list : [];
+    document.getElementById("spCountBadge").textContent = allProducts.length;
+    document.getElementById("modalTotalSp").textContent = allProducts.length;
+    renderProductsList();
   }
 
   async function doLogin(silent = false) {
@@ -375,6 +439,7 @@
         document.getElementById("loginView").style.display = "none";
         document.getElementById("adminView").style.display = "block";
         document.getElementById("welcomeText").textContent = "Xin chào, " + (res.full_name || creds.username);
+        syncProductsState(res.products_list);
         renderLiveQr();
       } else {
         sessionStorage.removeItem("kml_admin_creds");
@@ -398,6 +463,130 @@
     document.getElementById("formProduct").style.display = tab === "prod" ? "block" : "none";
     document.getElementById("formQr").style.display = tab === "qr" ? "block" : "none";
     if (tab === "qr") renderLiveQr();
+  }
+
+  // =========================================================================
+  // MODAL DANH SÁCH SẢN PHẨM -> SỬA / XÓA
+  // =========================================================================
+  async function openProductsModal() {
+    document.getElementById("productsListModal").classList.add("show");
+    renderProductsList();
+    try {
+      const res = await callAdminApi({ action: "list_products" });
+      if (res && res.products_list) syncProductsState(res.products_list);
+    } catch (e) {}
+  }
+
+  function closeProductsModal() {
+    document.getElementById("productsListModal").classList.remove("show");
+  }
+
+  function renderProductsList() {
+    const body = document.getElementById("productsListBody");
+    const keyword = (document.getElementById("searchSpInput").value || "").trim().toLowerCase();
+
+    const filtered = allProducts.filter(p =>
+      (p.name || "").toLowerCase().includes(keyword) ||
+      (p.barcode || "").toLowerCase().includes(keyword)
+    );
+
+    if (!filtered.length) {
+      body.innerHTML = `<div style="text-align:center; color:#64748b; padding:30px 10px; font-size:14px;">Chưa có sản phẩm nào phù hợp.</div>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map(p => {
+      const imgs = parseImagesFromProduct(p);
+      const thumb = imgs[0] || "https://placehold.co/100x100/f1f5f9/94a3b8?text=KML";
+      const priceText = Number(p.price || 0) > 0 ? Number(p.price).toLocaleString("vi-VN") + "đ" : "Chưa đặt giá";
+
+      return `
+        <div class="sp-row">
+          <img class="sp-thumb" src="${thumb}" alt="Ảnh SP" />
+          <div class="sp-info">
+            <div class="sp-title">${escapeHtml(p.name)}</div>
+            <div class="sp-meta">Mã vạch: <strong>${escapeHtml(p.barcode)}</strong> • ${imgs.length} ảnh</div>
+            <div class="sp-price">${priceText}</div>
+          </div>
+          <div class="sp-btns">
+            <button type="button" class="btn-edit-sp" onclick="editProductByBarcode('${escapeAttr(p.barcode)}')">✏️ Sửa</button>
+            <button type="button" class="btn-del-sp" onclick="deleteProductByBarcode('${escapeAttr(p.barcode)}', '${escapeAttr(p.name)}')">🗑️ Xóa</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function editProductByBarcode(barcode) {
+    const p = allProducts.find(item => item.barcode === barcode);
+    if (!p) return;
+
+    switchTab("prod");
+    closeProductsModal();
+
+    const bcInput = document.getElementById("pBarcode");
+    bcInput.value = p.barcode || "";
+    bcInput.readOnly = true;
+    document.getElementById("btnScanBarcode").style.display = "none";
+
+    document.getElementById("editingBarcodeLabel").textContent = p.barcode;
+    document.getElementById("editBanner").classList.add("show");
+    document.getElementById("btnSaveProd").textContent = "💾 Cập Nhật Sản Phẩm";
+
+    document.getElementById("pName").value = p.name || "";
+    document.getElementById("pPrice").value = p.price || "";
+    document.getElementById("pWeight").value = p.weight || "";
+    document.getElementById("pOrigin").value = p.origin || "Việt Nam";
+    document.getElementById("pBrand").value = p.brand_owner || "KML Beauty";
+    document.getElementById("pIngredients").value = p.ingredients || "";
+    document.getElementById("pUses").value = p.uses || "";
+    document.getElementById("pUsage").value = p.usage_instructions || "";
+    document.getElementById("pStorage").value = p.storage_instructions || "";
+
+    productImages = parseImagesFromProduct(p);
+    renderImageGrid();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function resetProductForm() {
+    const bcInput = document.getElementById("pBarcode");
+    bcInput.value = "";
+    bcInput.readOnly = false;
+    document.getElementById("btnScanBarcode").style.display = "flex";
+
+    document.getElementById("editBanner").classList.remove("show");
+    document.getElementById("btnSaveProd").textContent = "💾 Lưu Thông Tin Sản Phẩm";
+
+    document.getElementById("pName").value = "";
+    document.getElementById("pPrice").value = "";
+    document.getElementById("pWeight").value = "";
+    document.getElementById("pOrigin").value = "Việt Nam";
+    document.getElementById("pBrand").value = "KML Beauty";
+    document.getElementById("pIngredients").value = "";
+    document.getElementById("pUses").value = "";
+    document.getElementById("pUsage").value = "";
+    document.getElementById("pStorage").value = "";
+
+    productImages = [];
+    renderImageGrid();
+  }
+
+  async function deleteProductByBarcode(barcode, name) {
+    if (!confirm(`Bạn chắc chắn muốn XÓA VĨNH VIỄN sản phẩm:\n"${name}" (${barcode})?`)) return;
+
+    try {
+      const res = await callAdminApi({
+        action: "delete_product",
+        barcode: barcode
+      });
+      alert(res?.message || "Đã xóa!");
+      if (res && res.products_list) syncProductsState(res.products_list);
+      if (document.getElementById("pBarcode").value === barcode) {
+        resetProductForm();
+      }
+    } catch (e) {
+      alert("Lỗi kết nối khi xóa sản phẩm!");
+    }
   }
 
   async function saveProduct() {
@@ -429,6 +618,8 @@
     try {
       const res = await callAdminApi(payload);
       alert(res.message);
+      if (res && res.products_list) syncProductsState(res.products_list);
+      resetProductForm();
     } catch (e) {
       alert("Lỗi khi lưu sản phẩm! Kiểm tra kết nối mạng.");
     } finally {
@@ -465,6 +656,9 @@
     }
   }
 
+  // =========================================================================
+  // CAMERA QUÉT MÃ
+  // =========================================================================
   async function openScanner(inputId) {
     targetInputId = inputId;
     document.getElementById("camModal").classList.add("show");
@@ -512,6 +706,16 @@
       scannerInstance = null;
     }
     document.getElementById("camModal").classList.remove("show");
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text || "";
+    return div.innerHTML;
+  }
+
+  function escapeAttr(text) {
+    return String(text || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
   }
 </script>
 </body>
