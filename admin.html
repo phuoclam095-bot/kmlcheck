@@ -3,396 +3,359 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Xác Thực Hàng Chính Hãng - KML Beauty</title>
+  <title>Quản Trị Sản Phẩm & Tem QR KML Beauty</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #f1f5f9; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 14px; }
-    
-    .container { width: 100%; max-width: 460px; background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
-    .header { text-align: center; margin-bottom: 16px; }
-    .brand-tag { display: inline-block; background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 99px; margin-bottom: 6px; }
-    .header h1 { font-size: 20px; font-weight: 800; color: #0f172a; }
-    .header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+    body { background: #f1f5f9; color: #0f172a; padding: 14px; display: flex; justify-content: center; }
+    .app { width: 100%; max-width: 560px; }
 
-    .scanner-box { width: 100%; border-radius: 14px; overflow: hidden; background: #0f172a; position: relative; min-height: 230px; display: flex; align-items: center; justify-content: center; }
-    #reader { width: 100%; }
-    .cam-placeholder { text-align: center; color: #cbd5e1; padding: 24px; font-size: 14px; line-height: 1.5; }
+    .card { background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .sub { font-size: 13px; color: #64748b; margin-bottom: 16px; }
 
-    .btn-primary { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-    .btn-primary:active { transform: scale(0.98); background: #15803d; }
-    .btn-stop { background: #ef4444; }
+    .form-group { margin-bottom: 13px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px; }
+    input, textarea { width: 100%; padding: 11px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14.5px; outline: none; background: #fff; }
+    input:focus, textarea:focus { border-color: #16a34a; }
+    textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
 
-    .manual-box { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2e8f0; }
-    .manual-box label { display: block; font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: 500; }
-    .input-group { display: flex; gap: 8px; }
-    .input-group input { flex: 1; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 15px; outline: none; }
-    .input-group input:focus { border-color: #16a34a; }
-    .input-group button { padding: 0 18px; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-weight: 600; cursor: pointer; }
+    .input-with-scan { display: flex; gap: 8px; }
+    .input-with-scan input { flex: 1; }
+    .btn-scan { padding: 0 14px; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+    .btn-scan:active { opacity: 0.85; }
 
-    .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; font-weight: 600; color: #16a34a; gap: 10px; }
-    .loading-overlay.show { display: flex; }
-    .spinner { width: 38px; height: 38px; border: 4px solid #dcfce7; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 999; animation: fadeIn 0.2s ease; }
-    @media (min-width: 500px) { .modal-overlay { align-items: center; padding: 16px; } }
-    .modal-overlay.show { display: flex; }
+    .btn-submit { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
+    .btn-submit:active { background: #15803d; }
 
-    .modal-card { width: 100%; max-width: 460px; max-height: 92vh; background: #fff; border-radius: 22px 22px 0 0; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideUp 0.25s ease; }
-    @media (min-width: 500px) { .modal-card { border-radius: 22px; } }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .btn-logout { background: #fee2e2; color: #dc2626; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+    .tab-btn { padding: 10px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; }
+    .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 
-    .modal-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    .qr-preview { margin-top: 16px; padding: 16px; border: 1.5px dashed #16a34a; border-radius: 14px; text-align: center; background: #f0fdf4; display: none; }
+    .qr-preview img { width: 200px; height: 200px; border-radius: 10px; background: #fff; padding: 8px; border: 1px solid #bbf7d0; }
+    .qr-preview p { font-size: 12.5px; color: #166534; margin-top: 8px; word-break: break-all; }
 
-    .status-banner { padding: 22px 18px; text-align: center; color: #fff; }
-    .status-valid { background: linear-gradient(135deg, #16a34a, #15803d); }
-    .status-invalid { background: linear-gradient(135deg, #dc2626, #b91c1c); }
-
-    .shield-icon { width: 58px; height: 58px; margin: 0 auto 10px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; margin-bottom: 8px; }
-    .status-banner h2 { font-size: 19px; font-weight: 800; text-transform: uppercase; line-height: 1.3; }
-    .status-banner p { font-size: 13.5px; opacity: 0.95; margin-top: 6px; line-height: 1.45; }
-
-    .prod-hero-img { width: 100%; max-height: 260px; object-fit: cover; display: block; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-
-    .product-body { padding: 18px; }
-    .prod-name { font-size: 19px; font-weight: 800; color: #0f172a; line-height: 1.3; text-transform: uppercase; }
-    .prod-price-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
-    .prod-price { font-size: 20px; font-weight: 800; color: #16a34a; }
-    .prod-origin { font-size: 13px; color: #475569; background: #f1f5f9; padding: 3px 10px; border-radius: 6px; font-weight: 500; }
-
-    .meta-box { margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 13px; display: flex; flex-direction: column; gap: 9px; font-size: 13.5px; }
-    .meta-row { display: flex; justify-content: space-between; gap: 12px; }
-    .meta-label { color: #64748b; }
-    .meta-val { font-weight: 600; color: #0f172a; text-align: right; }
-
-    .auth-note-box { margin-top: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 13px; font-size: 13.5px; color: #166534; line-height: 1.55; }
-
-    .detail-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
-    .detail-section h3 { font-size: 14px; font-weight: 700; color: #0f172a; text-transform: uppercase; margin-bottom: 6px; }
-    .detail-section p { font-size: 14px; color: #334155; line-height: 1.55; white-space: pre-line; }
-
-    .modal-footer { padding: 12px 18px 18px; background: #fff; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px; }
-    .btn-scan-barcode { width: 100%; padding: 13px; border: none; border-radius: 12px; background: #16a34a; color: #fff; font-weight: 700; font-size: 14.5px; cursor: pointer; }
-    .btn-close-modal { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #f1f5f9; color: #0f172a; font-weight: 600; font-size: 14.5px; cursor: pointer; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .cam-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 999; }
+    .cam-modal.show { display: flex; }
+    .cam-box { width: 100%; max-width: 400px; background: #fff; border-radius: 18px; padding: 16px; text-align: center; }
+    #adminReader { width: 100%; border-radius: 12px; overflow: hidden; margin: 12px 0; }
+    .btn-close-cam { width: 100%; padding: 11px; border: none; border-radius: 10px; background: #ef4444; color: #fff; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="header">
-      <div class="brand-tag">✓ KML BEAUTY OFFICIAL</div>
-      <h1>Xác Thực & Tra Cứu Sản Phẩm</h1>
-      <p>Quét mã QR hoặc mã vạch sọc trên bao bì sản phẩm</p>
+<div class="app">
+  <!-- ĐĂNG NHẬP -->
+  <div id="loginView" class="card">
+    <h1>Đăng Nhập Quản Trị</h1>
+    <p class="sub">Quản lý sản phẩm & tem xác thực KML Beauty</p>
+    <div class="form-group">
+      <label>Tài khoản Admin</label>
+      <input type="text" id="loginUser" placeholder="Nhập username (VD: admin)" />
     </div>
-
-    <div class="scanner-box">
-      <div id="reader"></div>
-      <div id="camPlaceholder" class="cam-placeholder">
-        Bấm nút bên dưới để mở camera quét mã QR xác thực hoặc mã vạch sọc trên sản phẩm
-      </div>
+    <div class="form-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="loginPass" placeholder="Nhập mật khẩu" onkeydown="if(event.key==='Enter') doLogin()" />
     </div>
-
-    <button id="btnToggleCam" class="btn-primary" onclick="toggleCamera()">
-      📷 Mở Camera Quét Mã
-    </button>
-
-    <div class="manual-box">
-      <label for="manualCode">Hoặc nhập mã số dưới mã vạch / tem QR:</label>
-      <div class="input-group">
-        <input type="text" id="manualCode" placeholder="VD: 8938546852123" onkeydown="if(event.key==='Enter') checkManualCode()" />
-        <button onclick="checkManualCode()">Kiểm tra</button>
-      </div>
-    </div>
+    <button class="btn-submit" onclick="doLogin()">Đăng nhập hệ thống</button>
   </div>
 
-  <div id="loadingOverlay" class="loading-overlay">
-    <div class="spinner"></div>
-    <div>Đang xác thực trên hệ thống KML Beauty...</div>
-  </div>
-
-  <div id="resultModal" class="modal-overlay" onclick="closeModalOnBg(event)">
-    <div class="modal-card">
-      <div class="modal-scroll">
-        <div id="statusBanner" class="status-banner status-valid">
-          <div id="shieldIcon" class="shield-icon">🛡️</div>
-          <div id="statusBadge" class="status-badge">XÁC THỰC CHÍNH HÃNG</div>
-          <h2 id="statusTitle">SẢN PHẨM CHÍNH HÃNG</h2>
-          <p id="statusSub"></p>
+  <!-- QUẢN TRỊ -->
+  <div id="adminView" style="display:none;">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h1 id="welcomeText">Xin chào, Admin</h1>
+          <p class="sub" style="margin-bottom:0;">Thêm mới hoặc cập nhật dữ liệu lên Supabase</p>
         </div>
+        <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+      </div>
 
-        <img id="prodImg" class="prod-hero-img" src="" alt="Hình ảnh sản phẩm" style="display:none;" />
+      <div class="tabs">
+        <button id="tabProd" class="tab-btn active" onclick="switchTab('prod')">1. Sản Phẩm (Mã Vạch)</button>
+        <button id="tabQr" class="tab-btn" onclick="switchTab('qr')">2. Tem QR KML Beauty</button>
+      </div>
 
-        <div class="product-body">
-          <div id="prodName" class="prod-name"></div>
-          <div id="prodPriceRow" class="prod-price-row">
-            <span id="prodPrice" class="prod-price"></span>
-            <span id="prodOrigin" class="prod-origin"></span>
+      <!-- TAB 1: THÊM / SỬA SẢN PHẨM MÃ VẠCH -->
+      <div id="formProduct">
+        <div class="form-group">
+          <label>Mã vạch sản phẩm (Barcode) *</label>
+          <div class="input-with-scan">
+            <input type="text" id="pBarcode" placeholder="VD: 8938546852123" />
+            <button type="button" class="btn-scan" onclick="openScanner('pBarcode')">📷 Quét mã</button>
           </div>
-
-          <div id="metaBox" class="meta-box"></div>
-          <div id="authNoteBox" class="auth-note-box" style="display:none;"></div>
-          <div id="detailsContainer"></div>
         </div>
+
+        <div class="form-group">
+          <label>Tên sản phẩm *</label>
+          <input type="text" id="pName" placeholder="VD: KML WHITENING BODY CREAM" />
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label>Giá niêm yết (VNĐ)</label>
+            <input type="number" id="pPrice" placeholder="VD: 260000" />
+          </div>
+          <div class="form-group">
+            <label>Khối lượng / Dung tích</label>
+            <input type="text" id="pWeight" placeholder="VD: 200 gr" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label>Xuất xứ</label>
+            <input type="text" id="pOrigin" value="Việt Nam" />
+          </div>
+          <div class="form-group">
+            <label>Đơn vị sở hữu / Phân phối</label>
+            <input type="text" id="pBrand" value="KML Beauty" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Link hình ảnh sản phẩm</label>
+          <input type="text" id="pImg" placeholder="https://..." />
+        </div>
+
+        <div class="form-group">
+          <label>Thành phần</label>
+          <textarea id="pIngredients" placeholder="Nhập danh sách thành phần..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Công dụng</label>
+          <textarea id="pUses" placeholder="Nhập công dụng nổi bật..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Hướng dẫn sử dụng</label>
+          <textarea id="pUsage" placeholder="Nhập cách sử dụng..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Bảo quản</label>
+          <textarea id="pStorage" placeholder="VD: Tránh ánh nắng trực tiếp, để nơi khô ráo..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="saveProduct()">💾 Lưu Thông Tin Sản Phẩm</button>
       </div>
 
-      <div class="modal-footer">
-        <button id="btnQuickScanBarcode" class="btn-scan-barcode" style="display:none;" onclick="closeAndStartScan()">
-          📷 Quét tiếp mã vạch trên hộp để xem chi tiết
-        </button>
-        <button class="btn-close-modal" onclick="closeModal()">Đóng</button>
+      <!-- TAB 2: LƯU / SỬA MÃ QR XÁC THỰC CÔNG TY VÀO DATABASE -->
+      <div id="formQr" style="display:none;">
+        <div class="form-group">
+          <label>Mã QR định danh (Lưu vào Database) *</label>
+          <div class="input-with-scan">
+            <input type="text" id="qCode" value="KML-BEAUTY-AUTH" placeholder="VD: KML-BEAUTY-AUTH" />
+            <button type="button" class="btn-scan" onclick="openScanner('qCode')">📷 Quét QR</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tên công ty hiển thị trên Popup *</label>
+          <input type="text" id="qCompany" value="Công ty KML Beauty" />
+        </div>
+
+        <div class="form-group">
+          <label>Website chính thức</label>
+          <input type="text" id="qWebsite" value="kmlbeauty.com" />
+        </div>
+
+        <div class="form-group">
+          <label>Nội dung thông báo xác thực trên Popup</label>
+          <textarea id="qNote">Cảm ơn Quý khách đã tin dùng sản phẩm chính hãng của KML Beauty. Quý khách có thể quét tiếp mã vạch sọc trên vỏ hộp để xem thông tin chi tiết từng sản phẩm.</textarea>
+        </div>
+
+        <button class="btn-submit" onclick="saveQrCode()">💾 Lưu Mã QR Vào Database & Tạo Ảnh</button>
+
+        <div id="qrPreviewBox" class="qr-preview">
+          <img id="qrPreviewImg" src="" alt="Mã QR tĩnh" />
+          <p id="qrPreviewLink"></p>
+          <a id="qrDownloadBtn" href="" download="QR-KML-Beauty.png" target="_blank" style="display:inline-block; margin-top:10px; padding:9px 16px; background:#0f172a; color:#fff; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">⬇️ Tải Ảnh QR Tĩnh Để In Tem</a>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const N8N_WEBHOOK_URL = "https://wsm.congtubaclieu.com.vn/webhook/check-product";
+<!-- MODAL CAMERA -->
+<div id="camModal" class="cam-modal">
+  <div class="cam-box">
+    <h3 style="font-size:16px;">Đưa mã vạch hoặc QR vào khung</h3>
+    <div id="adminReader"></div>
+    <button class="btn-close-cam" onclick="closeScanner()">Đóng Camera</button>
+  </div>
+</div>
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const params = new URLSearchParams(window.location.search);
-      const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
-      if (codeFromUrl && codeFromUrl.trim()) {
-        verifyCode(codeFromUrl.trim());
-      }
+<script>
+  const ADMIN_WEBHOOK_URL = "https://wsm.congtubaclieu.com.vn/webhook/admin-api";
+  const PUBLIC_CHECK_URL  = "https://kmlcheck.vercel.app/";
+
+  let creds = { username: "", password: "" };
+  let targetInputId = null;
+  let scannerInstance = null;
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const saved = sessionStorage.getItem("kml_admin_creds");
+    if (saved) {
+      creds = JSON.parse(saved);
+      doLogin(true);
+    }
+  });
+
+  async function callAdminApi(payload) {
+    const res = await fetch(ADMIN_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...creds, ...payload })
     });
+    const data = await res.json();
+    return Array.isArray(data) ? data[0] : data;
+  }
 
-    let html5QrCode = null;
-    let isScanning = false;
-
-    async function toggleCamera() {
-      const btn = document.getElementById("btnToggleCam");
-      const placeholder = document.getElementById("camPlaceholder");
-
-      if (isScanning && html5QrCode) {
-        try { await html5QrCode.stop(); } catch (e) {}
-        isScanning = false;
-        btn.innerHTML = "📷 Mở Camera Quét Mã";
-        btn.classList.remove("btn-stop");
-        placeholder.style.display = "block";
-        return;
-      }
-
-      placeholder.style.display = "none";
-      html5QrCode = new Html5Qrcode("reader");
-
-      try {
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          {
-            fps: 12,
-            qrbox: { width: 260, height: 150 },
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E
-            ]
-          },
-          (decodedText) => {
-            let extractedCode = decodedText.trim();
-            try {
-              if (extractedCode.startsWith("http")) {
-                const urlObj = new URL(extractedCode);
-                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
-              }
-            } catch (e) {}
-
-            toggleCamera();
-            verifyCode(extractedCode);
-          }
-        );
-
-        isScanning = true;
-        btn.innerHTML = "⏹ Tắt Camera";
-        btn.classList.add("btn-stop");
-      } catch (err) {
-        placeholder.style.display = "block";
-        alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt.");
-      }
+  async function doLogin(silent = false) {
+    if (!silent) {
+      creds.username = document.getElementById("loginUser").value.trim();
+      creds.password = document.getElementById("loginPass").value;
     }
+    if (!creds.username || !creds.password) return alert("Vui lòng nhập đủ tài khoản và mật khẩu!");
 
-    function checkManualCode() {
-      const val = document.getElementById("manualCode").value.trim();
-      if (!val) return alert("Vui lòng nhập mã số!");
-      verifyCode(val);
-    }
-
-    async function verifyCode(rawCode) {
-      const loader = document.getElementById("loadingOverlay");
-      loader.classList.add("show");
-
-      try {
-        const response = await fetch(`${N8N_WEBHOOK_URL}?code=${encodeURIComponent(rawCode)}`, {
-          method: "GET",
-          headers: { "Accept": "application/json" }
-        });
-
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        const resJson = await response.json();
-        const item = Array.isArray(resJson) ? resJson[0] : resJson;
-
-        if (item && item.valid && item.data) {
-          if (item.scan_type === "company_qr") {
-            renderCompanyQrPopup(item.data);
-          } else {
-            renderValidProduct(item.data, rawCode);
-          }
-        } else {
-          renderInvalidCode(rawCode);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Không thể kết nối máy chủ kiểm tra. Vui lòng thử lại!");
-      } finally {
-        loader.classList.remove("show");
-      }
-    }
-
-    // POPUP 1: KHI KHÁCH QUÉT MÃ QR CHUNG ĐÃ LƯU TRONG SUPABASE
-    function renderCompanyQrPopup(q) {
-      const banner = document.getElementById("statusBanner");
-      banner.className = "status-banner status-valid";
-      document.getElementById("shieldIcon").textContent = "🛡️";
-      document.getElementById("statusBadge").textContent = "✓ TEM XÁC THỰC CHÍNH HÃNG";
-      document.getElementById("statusTitle").textContent = "HÀNG CHÍNH HÃNG " + (q.company_name || "CÔNG TY KML BEAUTY");
-      document.getElementById("statusSub").textContent = "Chứng nhận sản phẩm phân phối chính thức trên hệ thống";
-
-      document.getElementById("prodImg").style.display = "none";
-      document.getElementById("prodName").style.display = "none";
-      document.getElementById("prodPriceRow").style.display = "none";
-      document.getElementById("detailsContainer").innerHTML = "";
-
-      document.getElementById("metaBox").innerHTML = `
-        <div class="meta-row"><span class="meta-label">Đơn vị sở hữu:</span><span class="meta-val">${escapeHtml(q.company_name || "Công ty KML Beauty")}</span></div>
-        <div class="meta-row"><span class="meta-label">Mã định danh QR:</span><span class="meta-val">${escapeHtml(q.qr_code)}</span></div>
-        <div class="meta-row"><span class="meta-label">Website chính thức:</span><span class="meta-val">${escapeHtml(q.website || "kmlbeauty.com")}</span></div>
-        <div class="meta-row"><span class="meta-label">Trạng thái:</span><span class="meta-val" style="color:#16a34a;">✔ Hợp lệ / Chính hãng</span></div>
-      `;
-
-      const noteBox = document.getElementById("authNoteBox");
-      if (q.note && q.note.trim()) {
-        noteBox.style.display = "block";
-        noteBox.textContent = q.note;
+    try {
+      const res = await callAdminApi({ action: "login" });
+      if (res && res.authenticated) {
+        sessionStorage.setItem("kml_admin_creds", JSON.stringify(creds));
+        document.getElementById("loginView").style.display = "none";
+        document.getElementById("adminView").style.display = "block";
+        document.getElementById("welcomeText").textContent = "Xin chào, " + (res.full_name || creds.username);
       } else {
-        noteBox.style.display = "none";
+        sessionStorage.removeItem("kml_admin_creds");
+        if (!silent) alert(res?.message || "Đăng nhập thất bại!");
       }
-
-      document.getElementById("btnQuickScanBarcode").style.display = "block";
-      document.getElementById("resultModal").classList.add("show");
+    } catch (e) {
+      alert("Lỗi kết nối n8n Webhook!");
     }
+  }
 
-    // POPUP 2: KHI KHÁCH QUÉT MÃ VẠCH SẢN PHẨM
-    function renderValidProduct(p, scannedCode) {
-      const banner = document.getElementById("statusBanner");
-      banner.className = "status-banner status-valid";
-      document.getElementById("shieldIcon").textContent = "✅";
-      document.getElementById("statusBadge").textContent = "✓ THÔNG TIN SẢN PHẨM CHÍNH HÃNG";
-      document.getElementById("statusTitle").textContent = "SẢN PHẨM CHÍNH HÃNG KML BEAUTY";
-      document.getElementById("statusSub").textContent = "Thông tin trích xuất từ mã số mã vạch của nhà sản xuất";
+  function doLogout() {
+    sessionStorage.removeItem("kml_admin_creds");
+    creds = { username: "", password: "" };
+    document.getElementById("adminView").style.display = "none";
+    document.getElementById("loginView").style.display = "block";
+  }
 
-      document.getElementById("authNoteBox").style.display = "none";
-      document.getElementById("btnQuickScanBarcode").style.display = "none";
+  function switchTab(tab) {
+    document.getElementById("tabProd").classList.toggle("active", tab === "prod");
+    document.getElementById("tabQr").classList.toggle("active", tab === "qr");
+    document.getElementById("formProduct").style.display = tab === "prod" ? "block" : "none";
+    document.getElementById("formQr").style.display = tab === "qr" ? "block" : "none";
+  }
 
-      const img = document.getElementById("prodImg");
-      if (p.image_url) {
-        img.src = p.image_url;
-        img.style.display = "block";
-      } else {
-        img.style.display = "none";
+  async function saveProduct() {
+    const payload = {
+      action: "save_product",
+      barcode: document.getElementById("pBarcode").value.trim(),
+      name: document.getElementById("pName").value.trim(),
+      price: document.getElementById("pPrice").value.trim(),
+      weight: document.getElementById("pWeight").value.trim(),
+      origin: document.getElementById("pOrigin").value.trim(),
+      brand_owner: document.getElementById("pBrand").value.trim(),
+      image_url: document.getElementById("pImg").value.trim(),
+      ingredients: document.getElementById("pIngredients").value.trim(),
+      uses: document.getElementById("pUses").value.trim(),
+      usage_instructions: document.getElementById("pUsage").value.trim(),
+      storage_instructions: document.getElementById("pStorage").value.trim()
+    };
+
+    if (!payload.barcode || !payload.name) return alert("Vui lòng nhập Mã vạch và Tên sản phẩm!");
+
+    try {
+      const res = await callAdminApi(payload);
+      alert(res.message);
+    } catch (e) {
+      alert("Lỗi khi lưu sản phẩm!");
+    }
+  }
+
+  async function saveQrCode() {
+    const payload = {
+      action: "save_qr",
+      qr_code: document.getElementById("qCode").value.trim(),
+      company_name: document.getElementById("qCompany").value.trim(),
+      website: document.getElementById("qWebsite").value.trim(),
+      note: document.getElementById("qNote").value.trim()
+    };
+
+    if (!payload.qr_code) return alert("Vui lòng nhập Mã QR định danh!");
+
+    try {
+      const res = await callAdminApi(payload);
+      alert(res.message);
+
+      if (res.authenticated && res.message.includes("thành công")) {
+        const fullLink = `${PUBLIC_CHECK_URL}?code=${encodeURIComponent(payload.qr_code)}`;
+        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(fullLink)}`;
+        document.getElementById("qrPreviewImg").src = qrImgUrl;
+        document.getElementById("qrPreviewLink").textContent = fullLink;
+        document.getElementById("qrDownloadBtn").href = qrImgUrl;
+        document.getElementById("qrPreviewBox").style.display = "block";
       }
+    } catch (e) {
+      alert("Lỗi khi lưu mã QR!");
+    }
+  }
 
-      document.getElementById("prodName").style.display = "block";
-      document.getElementById("prodPriceRow").style.display = "flex";
-      document.getElementById("prodName").textContent = p.name || "Sản phẩm KML Beauty";
+  async function openScanner(inputId) {
+    targetInputId = inputId;
+    document.getElementById("camModal").classList.add("show");
+    scannerInstance = new Html5Qrcode("adminReader");
 
-      const formattedPrice = Number(p.price || 0) > 0
-        ? Number(p.price).toLocaleString("vi-VN") + "đ"
-        : "Liên hệ";
-      document.getElementById("prodPrice").textContent = formattedPrice;
-      document.getElementById("prodOrigin").textContent = p.origin || "Việt Nam";
+    try {
+      await scannerInstance.start(
+        { facingMode: "environment" },
+        {
+          fps: 12,
+          qrbox: { width: 250, height: 150 },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.UPC_A
+          ]
+        },
+        (decodedText) => {
+          let cleanVal = decodedText.trim();
+          try {
+            if (cleanVal.startsWith("http")) {
+              const u = new URL(cleanVal);
+              cleanVal = u.searchParams.get("code") || u.searchParams.get("id") || cleanVal;
+            }
+          } catch (e) {}
 
-      let metaHtml = `
-        <div class="meta-row"><span class="meta-label">Mã vạch sản phẩm:</span><span class="meta-val">${escapeHtml(p.barcode || scannedCode)}</span></div>
-        <div class="meta-row"><span class="meta-label">Đơn vị sở hữu:</span><span class="meta-val">${escapeHtml(p.brand_owner || "KML Beauty")}</span></div>
-      `;
-      if (p.weight) {
-        metaHtml += `<div class="meta-row"><span class="meta-label">Khối lượng / Dung tích:</span><span class="meta-val">${escapeHtml(p.weight)}</span></div>`;
-      }
-      document.getElementById("metaBox").innerHTML = metaHtml;
-
-      const sections = [
-        { title: "Thành phần", content: p.ingredients },
-        { title: "Công dụng", content: p.uses },
-        { title: "Hướng dẫn sử dụng", content: p.usage_instructions },
-        { title: "Bảo quản", content: p.storage_instructions }
-      ];
-
-      let detailsHtml = "";
-      sections.forEach(sec => {
-        if (sec.content && sec.content.trim()) {
-          detailsHtml += `
-            <div class="detail-section">
-              <h3>${sec.title}:</h3>
-              <p>${escapeHtml(sec.content)}</p>
-            </div>
-          `;
+          if (targetInputId) {
+            document.getElementById(targetInputId).value = cleanVal;
+          }
+          closeScanner();
         }
-      });
-      document.getElementById("detailsContainer").innerHTML = detailsHtml;
-
-      document.getElementById("resultModal").classList.add("show");
+      );
+    } catch (err) {
+      closeScanner();
+      alert("Không mở được camera. Vui lòng cấp quyền Camera và chạy qua HTTPS.");
     }
+  }
 
-    // POPUP 3: CẢNH BÁO MÃ SAI / KHÔNG TỒN TẠI
-    function renderInvalidCode(scannedCode) {
-      const banner = document.getElementById("statusBanner");
-      banner.className = "status-banner status-invalid";
-      document.getElementById("shieldIcon").textContent = "⚠️";
-      document.getElementById("statusBadge").textContent = "CẢNH BÁO XÁC THỰC";
-      document.getElementById("statusTitle").textContent = "MÃ KHÔNG TỒN TẠI TRÊN HỆ THỐNG";
-      document.getElementById("statusSub").textContent = "Mã QR hoặc mã vạch này không có trên hệ thống của KML Beauty.";
-
-      document.getElementById("prodImg").style.display = "none";
-      document.getElementById("prodName").style.display = "none";
-      document.getElementById("prodPriceRow").style.display = "none";
-      document.getElementById("authNoteBox").style.display = "none";
-      document.getElementById("btnQuickScanBarcode").style.display = "none";
-      document.getElementById("detailsContainer").innerHTML = "";
-
-      document.getElementById("metaBox").innerHTML = `
-        <div class="meta-row"><span class="meta-label">Mã đã kiểm tra:</span><span class="meta-val" style="color:#dc2626">${escapeHtml(scannedCode)}</span></div>
-        <div class="meta-row"><span class="meta-label">Trạng thái:</span><span class="meta-val" style="color:#dc2626">Chưa khai báo hoặc đã bị khóa</span></div>
-      `;
-
-      document.getElementById("resultModal").classList.add("show");
+  async function closeScanner() {
+    if (scannerInstance) {
+      try { await scannerInstance.stop(); } catch (e) {}
+      scannerInstance = null;
     }
-
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function closeAndStartScan() {
-      closeModal();
-      if (!isScanning) toggleCamera();
-    }
-
-    function closeModal() {
-      document.getElementById("resultModal").classList.remove("show");
-      if (window.history.replaceState && window.location.search) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-
-    function closeModalOnBg(e) {
-      if (e.target.id === "resultModal") closeModal();
-    }
-  </script>
+    document.getElementById("camModal").classList.remove("show");
+  }
+</script>
 </body>
 </html>
