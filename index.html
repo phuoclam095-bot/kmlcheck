@@ -62,11 +62,11 @@
     }
     .scan-intro-icon { font-size: 32px; margin-bottom: 8px; display: block; }
 
-    /* KHUNG CAMERA CỐ ĐỊNH TỶ LỆ 4:3 - KHÔNG NHẢY KHUNG 2 LẦN */
+    /* KHUNG CAMERA 1 VIDEO DUY NHẤT - KHÔNG NHẢY KHUNG TRÊN ZALO */
     .scanner-wrapper {
       position: relative;
       width: 100%;
-      aspect-ratio: 4 / 3;
+      height: 260px;
       border-radius: 18px;
       overflow: hidden;
       background: #0f172a;
@@ -74,37 +74,14 @@
     }
     .scanner-wrapper.active { display: block; }
 
-    #reader {
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      border: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-    #reader__scan_region {
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      min-height: unset !important;
-    }
-    #reader video {
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      display: block !important;
-    }
-    /* Ẩn toàn bộ lớp phụ của html5-qrcode để chỉ còn 1 khung duy nhất */
-    #reader__scan_region img,
-    #reader__dashboard,
-    #reader__header_message,
-    #qr-shaded-region,
-    #reader__scan_region > div {
-      display: none !important;
+    #camVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #0f172a;
     }
 
     .scan-hud {
@@ -287,9 +264,9 @@
       Bấm nút bên dưới để mở camera quét <strong>mã QR xác thực</strong> hoặc <strong>mã vạch sọc</strong> trên sản phẩm
     </div>
 
-    <!-- Khung Camera 1 lớp duy nhất với 4 góc ngắm & tia laser -->
+    <!-- Khung Camera 1 video duy nhất, cố định chiều cao 260px -->
     <div class="scanner-wrapper" id="scannerWrapper">
-      <div id="reader"></div>
+      <video id="camVideo" autoplay playsinline muted></video>
 
       <div id="scanHud" class="scan-hud">
         <div class="viewfinder">
@@ -302,6 +279,9 @@
         <div class="scan-hint-pill">Canh mã QR hoặc mã vạch vào giữa khung</div>
       </div>
     </div>
+
+    <!-- Vùng giải mã ngầm (ẩn hoàn toàn, không bao giờ hiện khung phụ) -->
+    <div id="hiddenDecoder" style="display:none;"></div>
 
     <button id="btnToggleCam" class="btn-primary" onclick="toggleCamera()">
       📷 Mở Camera Quét Mã
@@ -369,17 +349,35 @@
       }
     });
 
-    let html5QrCode = null;
+    let mediaStream = null;
     let isScanning = false;
+    let scanTimer = null;
+    let fallbackScanner = null;
+    const offscreenCanvas = document.createElement("canvas");
+    const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
+
+    function stopMediaStream() {
+      isScanning = false;
+      if (scanTimer) {
+        clearTimeout(scanTimer);
+        scanTimer = null;
+      }
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+      const video = document.getElementById("camVideo");
+      video.srcObject = null;
+    }
 
     async function toggleCamera() {
       const btn = document.getElementById("btnToggleCam");
       const introBox = document.getElementById("scanIntroBox");
       const scannerWrapper = document.getElementById("scannerWrapper");
+      const video = document.getElementById("camVideo");
 
-      if (isScanning && html5QrCode) {
-        try { await html5QrCode.stop(); } catch (e) {}
-        isScanning = false;
+      if (isScanning) {
+        stopMediaStream();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
         btn.innerHTML = "📷 Mở Camera Quét Mã";
@@ -387,52 +385,98 @@
         return;
       }
 
-      introBox.style.display = "none";
-      scannerWrapper.classList.add("active");
-
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader", {
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-          verbose: false
-        });
-      }
-
       try {
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          {
-            fps: 15,
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E
-            ]
-          },
-          (decodedText) => {
-            let extractedCode = decodedText.trim();
-            try {
-              if (extractedCode.startsWith("http")) {
-                const urlObj = new URL(extractedCode);
-                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
-              }
-            } catch (e) {}
+        // Mở trực tiếp 1 luồng camera sau duy nhất vào thẻ <video id="camVideo">
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
 
-            toggleCamera();
-            verifyCode(extractedCode);
-          }
-        );
+        video.srcObject = mediaStream;
+        await video.play();
 
+        introBox.style.display = "none";
+        scannerWrapper.classList.add("active");
         isScanning = true;
         btn.innerHTML = "⏹ Tắt Camera";
         btn.classList.add("btn-stop");
+
+        startFrameDecodeLoop(video);
       } catch (err) {
+        stopMediaStream();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
         alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
       }
+    }
+
+    function startFrameDecodeLoop(video) {
+      let detector = null;
+      if ("BarcodeDetector" in window) {
+        try {
+          detector = new BarcodeDetector({
+            formats: ["qr_code", "ean_13", "ean_8", "code_128", "upc_a", "upc_e"]
+          });
+        } catch (e) {
+          detector = null;
+        }
+      }
+
+      if (!detector && !fallbackScanner) {
+        fallbackScanner = new Html5Qrcode("hiddenDecoder", { verbose: false });
+      }
+
+      const handleDetected = (rawText) => {
+        if (!isScanning || !rawText) return;
+        let extractedCode = rawText.trim();
+        try {
+          if (extractedCode.startsWith("http")) {
+            const urlObj = new URL(extractedCode);
+            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
+          }
+        } catch (e) {}
+
+        // Tắt camera ngay lập tức và trả kết quả
+        toggleCamera();
+        verifyCode(extractedCode);
+      };
+
+      const scanStep = async () => {
+        if (!isScanning) return;
+
+        if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+          try {
+            if (detector) {
+              const barcodes = await detector.detect(video);
+              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                handleDetected(barcodes[0].rawValue);
+                return;
+              }
+            } else if (fallbackScanner) {
+              offscreenCanvas.width = video.videoWidth;
+              offscreenCanvas.height = video.videoHeight;
+              offscreenCtx.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+              const blob = await new Promise(res => offscreenCanvas.toBlob(res, "image/jpeg", 0.8));
+              if (blob) {
+                const file = new File([blob], "frame.jpg", { type: "image/jpeg" });
+                const text = await fallbackScanner.scanFile(file, false);
+                if (text) {
+                  handleDetected(text);
+                  return;
+                }
+              }
+            }
+          } catch (e) {
+            // Bỏ qua khung hình chưa bắt được mã
+          }
+        }
+
+        if (isScanning) {
+          scanTimer = setTimeout(scanStep, detector ? 120 : 250);
+        }
+      };
+
+      scanStep();
     }
 
     function checkManualCode() {
