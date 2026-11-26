@@ -673,86 +673,11 @@
       <!-- Logo chính thức KML (Vector sắc nét từ logo gốc) -->
       <!-- Logo chính thức KML (Tọa độ & tỷ lệ chuẩn 100% theo ảnh gốc) -->
       <div class="brand-logo-box" aria-label="Logo KML Beauty" style="height: 82px; margin-bottom: 10px;">
-        <svg viewBox="0 0 1000 725" xmlns="http://www.w3.org/2000/svg" style="height: 100%; width: auto; display: block;">
-          <defs>
-            <!-- Chấm tròn đỉnh -->
-            <linearGradient id="kmlDot" x1="20%" y1="0%" x2="80%" y2="100%">
-              <stop offset="0%" stop-color="#FDB813"/>
-              <stop offset="100%" stop-color="#F38208"/>
-            </linearGradient>
-            <!-- Cánh đứng (12h) -->
-            <linearGradient id="kmlPetal1" x1="30%" y1="0%" x2="70%" y2="100%">
-              <stop offset="0%" stop-color="#FCB316"/>
-              <stop offset="55%" stop-color="#F6890B"/>
-              <stop offset="100%" stop-color="#EE6806"/>
-            </linearGradient>
-            <!-- Cánh xiên trên (10h30) -->
-            <linearGradient id="kmlPetal2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#FDE047"/>
-              <stop offset="100%" stop-color="#F7A81B"/>
-            </linearGradient>
-            <!-- Cánh ngang (9h) -->
-            <linearGradient id="kmlPetal3" x1="0%" y1="40%" x2="100%" y2="60%">
-              <stop offset="0%" stop-color="#FBC732"/>
-              <stop offset="100%" stop-color="#F49A16"/>
-            </linearGradient>
-            <!-- Cánh rủ dưới (7h30) -->
-            <linearGradient id="kmlPetal4" x1="70%" y1="0%" x2="20%" y2="100%">
-              <stop offset="0%" stop-color="#F36D08"/>
-              <stop offset="100%" stop-color="#E64804"/>
-            </linearGradient>
-            <!-- Đường cong swoosh bên phải -->
-            <linearGradient id="kmlSwoosh" x1="80%" y1="0%" x2="20%" y2="100%">
-              <stop offset="0%" stop-color="#F57E0A"/>
-              <stop offset="50%" stop-color="#EC5A05"/>
-              <stop offset="100%" stop-color="#E54603"/>
-            </linearGradient>
-            <!-- Bộ chữ KML -->
-            <linearGradient id="kmlLetters" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#F97D0C"/>
-              <stop offset="55%" stop-color="#F05E05"/>
-              <stop offset="100%" stop-color="#E84A03"/>
-            </linearGradient>
-          </defs>
-
-          <!-- Nền viền trắng sticker đồng nhất như ảnh gốc -->
-          <g stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
-            <!-- Chấm tròn góc trên phải -->
-            <circle cx="642" cy="65" r="44" fill="url(#kmlDot)"/>
-
-            <!-- Cánh 2 (10h30) -->
-            <path d="M 556,248 C 460,236 404,178 404,114 C 474,114 536,166 556,248 Z" fill="url(#kmlPetal2)"/>
-
-            <!-- Cánh 3 (9h) -->
-            <path d="M 556,248 C 472,290 388,284 334,242 C 384,192 470,192 556,248 Z" fill="url(#kmlPetal3)"/>
-
-            <!-- Cánh 1 (12h - đứng) -->
-            <path d="M 556,248 C 502,188 504,104 558,48 C 612,104 614,188 556,248 Z" fill="url(#kmlPetal1)"/>
-
-            <!-- Cánh 4 (7h30 - rủ dưới cam đậm) -->
-            <path d="M 556,248 C 542,332 480,394 400,410 C 402,326 466,262 556,248 Z" fill="url(#kmlPetal4)"/>
-
-            <!-- Đường cong chữ J ôm sát cụm hoa -->
-            <path d="M 684,96 C 646,184 644,296 576,362 C 516,420 416,436 334,432 C 414,424 496,402 548,348 C 606,288 614,184 684,96 Z" fill="url(#kmlSwoosh)"/>
-
-            <!-- Bộ chữ KML bản dày chuẩn tỷ lệ gốc -->
-            <g fill="url(#kmlLetters)">
-              <!-- Chữ K -->
-              <path d="M 64,468 H 134 V 556 L 214,468 H 302 L 204,572 L 344,704 H 248 L 134,592 V 704 H 64 Z"/>
-              <!-- Chữ M -->
-              <path d="M 358,468 H 442 L 502,598 L 562,468 H 646 V 704 H 578 V 552 L 516,684 H 488 L 426,552 V 704 H 358 Z"/>
-              <!-- Chữ L với đuôi kéo dài uốn vểnh nhọn -->
-              <path d="M 700,468 H 772 V 638 H 866 C 896,638 920,628 936,612 C 924,668 886,704 826,704 H 700 Z"/>
-            </g>
-          </g>
-
-          <!-- Vẽ lại lớp chuyển sắc giao thoa giữa 2 cánh vàng (không viền đè) -->
-          <path d="M 556,248 C 460,236 404,178 404,114 C 474,114 536,166 556,248 Z" fill="url(#kmlPetal2)" opacity="0.92"/>
-          <path d="M 556,248 C 472,290 388,284 334,242 C 384,192 470,192 556,248 Z" fill="url(#kmlPetal3)" opacity="0.88"/>
-          <path d="M 556,248 C 472,290 388,284 334,242 C 384,192 470,192 556,248 Z" fill="none" stroke="#FFFFFF" stroke-width="4"/>
-          <path d="M 556,248 C 502,188 504,104 558,48 C 612,104 614,188 556,248 Z" fill="url(#kmlPetal1)"/>
-          <path d="M 556,248 C 542,332 480,394 400,410 C 402,326 466,262 556,248 Z" fill="url(#kmlPetal4)"/>
-        </svg>
+        <img 
+          src="https://lh3.googleusercontent.com/d/1ciBmjcNLImGohl23OrTdFOx4VLlFY_9i" 
+          alt="Logo KML Beauty" 
+          style="height: 100%; width: auto; object-fit: contain; display: block;" 
+        />
       </div>
 
       <div class="brand-eyebrow">
@@ -870,7 +795,7 @@
 
     let html5QrCode = null;
     let isScanning = false;
-
+    let galleryAutoTimer = null;
     async function toggleCamera() {
       const btn = document.getElementById("btnToggleCam");
       const introBox = document.getElementById("scanIntroBox");
@@ -1054,16 +979,48 @@
       const track = document.getElementById("galleryTrack");
       const dots = document.getElementById("galleryDots");
 
+      if (galleryAutoTimer) {
+        clearInterval(galleryAutoTimer);
+        galleryAutoTimer = null;
+      }
+
       if (imgs.length > 0) {
         track.innerHTML = imgs.map(src => `<div class="gallery-slide"><img src="${src}" alt="Hình ảnh sản phẩm" /></div>`).join("");
         dots.innerHTML = imgs.length > 1
           ? imgs.map((_, i) => `<span class="gallery-dot ${i === 0 ? "active" : ""}"></span>`).join("")
           : "";
+
+        let currentSlide = 0;
+
         track.onscroll = () => {
-          const idx = Math.round(track.scrollLeft / track.clientWidth);
-          dots.querySelectorAll(".gallery-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+          const width = track.clientWidth || 1;
+          currentSlide = Math.round(track.scrollLeft / width);
+          dots.querySelectorAll(".gallery-dot").forEach((d, i) => d.classList.toggle("active", i === currentSlide));
         };
+
         gallery.style.display = "block";
+        track.scrollLeft = 0;
+
+        if (imgs.length > 1) {
+          const startAutoSlide = () => {
+            clearInterval(galleryAutoTimer);
+            galleryAutoTimer = setInterval(() => {
+              currentSlide = (currentSlide + 1) % imgs.length;
+              track.scrollTo({
+                left: currentSlide * track.clientWidth,
+                behavior: "smooth"
+              });
+            }, 2800);
+          };
+
+          // Tạm dừng khi người dùng chạm tay xem kỹ ảnh, thả tay ra tự chạy tiếp
+          track.ontouchstart = () => clearInterval(galleryAutoTimer);
+          track.ontouchend = startAutoSlide;
+          track.onmouseenter = () => clearInterval(galleryAutoTimer);
+          track.onmouseleave = startAutoSlide;
+
+          startAutoSlide();
+        }
       } else {
         gallery.style.display = "none";
       }
@@ -1166,6 +1123,10 @@
     }
 
     function closeModal() {
+      if (galleryAutoTimer) {
+        clearInterval(galleryAutoTimer);
+        galleryAutoTimer = null;
+      }
       document.getElementById("resultModal").classList.remove("show");
       if (window.history.replaceState && window.location.search) {
         window.history.replaceState({}, document.title, window.location.pathname);
