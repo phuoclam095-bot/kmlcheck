@@ -10,17 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-page: #FDF6F0;
+      --bg-page: #FBECE0;
       --bg-card: #FFFFFF;
-      --bg-subtle: #FFF9F5;
-      --ink-primary: #2B1B12;
-      --ink-secondary: #6E5649;
-      --ink-muted: #9E8679;
-      --peach-primary: #E07A48;
-      --peach-soft: #F7B58D;
-      --peach-light: #FDECE1;
-      --peach-tint: #FFF3EB;
-      --border-hairline: #F2DFD3;
+      --bg-subtle: #FFF6EE;
+      --ink-primary: #26150C;
+      --ink-secondary: #63493B;
+      --ink-muted: #967B6C;
+      --peach-primary: #D9622B;
+      --peach-deep: #B84917;
+      --peach-soft: #F39B6D;
+      --peach-light: #FCE0CE;
+      --peach-tint: #FFEDE2;
+      --border-hairline: #EED4C2;
       --emerald-luxury: #164E3B;
       --danger-luxury: #881337;
     }
@@ -37,7 +38,7 @@
       width: 100%;
       min-height: 100dvh;
       background: var(--bg-page);
-      background-image: radial-gradient(circle at 50% 0%, #FFFDFB 0%, #FBECE1 100%);
+      background-image: radial-gradient(circle at 50% 0%, #FFF9F4 0%, #F7DFCE 100%);
       color: var(--ink-primary);
       overflow-x: hidden;
     }
@@ -57,27 +58,61 @@
       border: 1px solid var(--border-hairline);
       border-radius: 26px;
       padding: 24px 20px 22px;
-      box-shadow: 0 20px 42px -12px rgba(224, 122, 72, 0.14), 0 2px 8px rgba(43, 27, 18, 0.03);
+      box-shadow: 0 20px 42px -12px rgba(217, 98, 43, 0.18), 0 2px 8px rgba(38, 21, 12, 0.04);
       margin: 0;
       position: relative;
-    }
-
-    /* Đường viền cam nhạt trang trí đỉnh thẻ */
-    .container::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 3.5px;
-      background: linear-gradient(90deg, transparent, var(--peach-primary), transparent);
-      border-radius: 0 0 4px 4px;
     }
 
     .header {
       text-align: center;
       margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Logo biểu tượng KML Beauty phía trên */
+    .brand-logo-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F2854E 0%, #C8501A 100%);
+      padding: 2.5px;
+      box-shadow: 0 8px 20px -4px rgba(217, 98, 43, 0.38);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-logo-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #FFF8F3;
+      border: 1px solid rgba(217, 98, 43, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .brand-logo-monogram {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--peach-deep);
+      letter-spacing: 0.6px;
+    }
+
+    .brand-logo-sub {
+      font-size: 6.5px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      color: var(--peach-primary);
+      text-transform: uppercase;
+      margin-top: 2px;
     }
 
     .brand-eyebrow {
@@ -88,9 +123,9 @@
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #C45D2C;
+      color: var(--peach-deep);
       background: var(--peach-tint);
-      border: 1px solid rgba(224, 122, 72, 0.28);
+      border: 1px solid rgba(217, 98, 43, 0.34);
       padding: 5px 14px;
       border-radius: 99px;
       margin-bottom: 8px;
@@ -99,7 +134,7 @@
     .brand-eyebrow svg {
       width: 12px;
       height: 12px;
-      stroke: #C45D2C;
+      stroke: var(--peach-deep);
     }
 
     .header h1 {
@@ -117,12 +152,12 @@
       margin-top: 5px;
     }
 
-    /* Hộp chờ chạm mở camera tông cam đào ấm (giữ nguyên chiều cao 175px) */
+    /* Hộp chờ chạm mở camera tông cam ấm (giữ nguyên chiều cao 175px) */
     .scan-intro-box {
       width: 100%;
       height: 175px;
-      background: linear-gradient(145deg, #FFF5EE 0%, #FCE6D8 100%);
-      border: 1.5px dashed rgba(224, 122, 72, 0.45);
+      background: linear-gradient(145deg, #FFEDE0 0%, #FBD6BE 100%);
+      border: 1.5px dashed rgba(217, 98, 43, 0.55);
       border-radius: 20px;
       padding: 18px;
       display: flex;
@@ -149,8 +184,8 @@
       height: 46px;
       border-radius: 50%;
       background: #FFFFFF;
-      border: 1px solid rgba(224, 122, 72, 0.35);
-      box-shadow: 0 6px 16px rgba(224, 122, 72, 0.16);
+      border: 1px solid rgba(217, 98, 43, 0.4);
+      box-shadow: 0 6px 16px rgba(217, 98, 43, 0.22);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -164,7 +199,7 @@
 
     .scan-intro-text {
       max-width: 250px;
-      color: var(--ink-secondary);
+      color: var(--ink-primary);
       font-weight: 500;
     }
 
@@ -176,7 +211,7 @@
       border-radius: 20px;
       overflow: hidden;
       background: #1F140E;
-      border: 1.5px solid rgba(224, 122, 72, 0.45);
+      border: 1.5px solid rgba(217, 98, 43, 0.55);
       display: none;
     }
     .scanner-wrapper.active { display: block; }
@@ -203,7 +238,7 @@
       display: none !important;
     }
 
-    /* Lớp phủ khung ngắm cam nhạt */
+    /* Lớp phủ khung ngắm cam */
     .scan-hud {
       position: absolute;
       inset: 0;
@@ -238,15 +273,15 @@
       right: 8px;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--peach-soft), #FFFFFF, var(--peach-soft), transparent);
-      box-shadow: 0 0 10px rgba(247, 181, 141, 0.95);
+      box-shadow: 0 0 10px rgba(243, 155, 109, 0.95);
       animation: scanSweep 2.4s ease-in-out infinite;
     }
     .scan-hint-pill {
       position: absolute;
       bottom: 8px;
-      background: rgba(31, 20, 14, 0.76);
+      background: rgba(31, 20, 14, 0.78);
       backdrop-filter: blur(6px);
-      border: 1px solid rgba(247, 181, 141, 0.3);
+      border: 1px solid rgba(243, 155, 109, 0.35);
       color: #FFF6F0;
       font-size: 10.5px;
       letter-spacing: 0.3px;
@@ -275,10 +310,10 @@
       transition: all 0.2s ease;
     }
     .btn-cam-ctrl.active-start {
-      background: linear-gradient(135deg, #EE9364 0%, #D96E3B 100%);
-      border-color: #D96E3B;
+      background: linear-gradient(135deg, #EA7B42 0%, #C8501A 100%);
+      border-color: #C8501A;
       color: #FFFFFF;
-      box-shadow: 0 10px 22px -6px rgba(217, 110, 59, 0.42);
+      box-shadow: 0 10px 22px -6px rgba(200, 80, 26, 0.45);
     }
     .btn-cam-ctrl:active {
       transform: scale(0.985);
@@ -333,21 +368,21 @@
       transition: all 0.2s ease;
     }
     .input-group input::placeholder {
-      color: #C2ACA0;
+      color: #BA9E8E;
       font-weight: 400;
       letter-spacing: 0;
     }
     .input-group input:focus {
       background: #FFFFFF;
       border-color: var(--peach-primary);
-      box-shadow: 0 0 0 3px rgba(224, 122, 72, 0.14);
+      box-shadow: 0 0 0 3px rgba(217, 98, 43, 0.16);
     }
     .input-group button {
       padding: 0 20px;
-      border: 1px solid rgba(224, 122, 72, 0.35);
+      border: 1px solid rgba(217, 98, 43, 0.45);
       border-radius: 14px;
       background: var(--peach-light);
-      color: #B84F1E;
+      color: var(--peach-deep);
       font-weight: 700;
       font-size: 13.5px;
       letter-spacing: 0.2px;
@@ -356,7 +391,7 @@
       transition: all 0.2s;
     }
     .input-group button:active {
-      background: #FAD8C3;
+      background: #F6C8AC;
     }
 
     .footer-note {
@@ -373,7 +408,7 @@
     .loading-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(253, 246, 240, 0.92);
+      background: rgba(251, 236, 224, 0.92);
       backdrop-filter: blur(6px);
       display: none;
       flex-direction: column;
@@ -422,7 +457,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 25px 50px -12px rgba(43, 27, 18, 0.35);
+      box-shadow: 0 25px 50px -12px rgba(38, 21, 12, 0.35);
       animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @media (min-width: 500px) {
@@ -455,8 +490,8 @@
       align-items: center;
       gap: 6px;
       background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(253, 236, 225, 0.38);
-      color: #FDECE1;
+      border: 1px solid rgba(252, 224, 206, 0.38);
+      color: #FCE0CE;
       padding: 4px 13px;
       border-radius: 99px;
       font-size: 10.5px;
@@ -523,7 +558,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #E5CFC2;
+      background: #E2C3B0;
       transition: 0.25s;
     }
     .gallery-dot.active {
@@ -552,7 +587,7 @@
     .prod-price {
       font-size: 19px;
       font-weight: 700;
-      color: #C45D2C;
+      color: var(--peach-deep);
     }
     .prod-origin {
       font-size: 11.5px;
@@ -581,7 +616,7 @@
       gap: 8px;
       width: 100%;
       padding-bottom: 8px;
-      border-bottom: 1px dashed rgba(43, 27, 18, 0.08);
+      border-bottom: 1px dashed rgba(38, 21, 12, 0.08);
     }
     .meta-row:last-child {
       padding-bottom: 0;
@@ -618,7 +653,7 @@
     .detail-section h3 {
       font-size: 11.5px;
       font-weight: 700;
-      color: #C45D2C;
+      color: var(--peach-deep);
       letter-spacing: 1px;
       text-transform: uppercase;
       margin-bottom: 6px;
@@ -640,7 +675,7 @@
       padding: 13.5px;
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #EE9364 0%, #D96E3B 100%);
+      background: linear-gradient(135deg, #EA7B42 0%, #C8501A 100%);
       color: #FFFFFF;
       font-weight: 600;
       font-size: 14px;
@@ -663,6 +698,14 @@
 
   <div class="container">
     <div class="header">
+      <!-- Logo KML Beauty phía trên -->
+      <div class="brand-logo-wrap" aria-hidden="true">
+        <div class="brand-logo-inner">
+          <span class="brand-logo-monogram">KML</span>
+          <span class="brand-logo-sub">BEAUTY</span>
+        </div>
+      </div>
+
       <div class="brand-eyebrow">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
