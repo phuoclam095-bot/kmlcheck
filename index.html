@@ -48,6 +48,39 @@
     .header h1 { font-size: 20px; font-weight: 800; color: #0f172a; }
     .header p { font-size: 13px; color: #64748b; margin-top: 3px; }
 
+    /* Banner cảnh báo riêng khi mở trong Zalo */
+    .zalo-notice {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .zalo-notice.show { display: block; }
+    .zalo-notice-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-zalo-ext {
+      flex: 1;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+
     /* KHUNG CAMERA HIỆN ĐẠI VỚI 4 GÓC NGẮM & TIA LASER */
     .scanner-wrapper {
       position: relative;
@@ -58,6 +91,7 @@
       overflow: hidden;
       background: #0f172a;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      cursor: pointer;
     }
     #reader {
       width: 100% !important;
@@ -70,14 +104,12 @@
       object-fit: cover !important;
       border-radius: 18px;
     }
-    /* Ẩn khung quét thô mặc định của html5-qrcode */
     #reader__scan_region img,
     #reader__dashboard,
     #qr-shaded-region {
       display: none !important;
     }
 
-    /* Lớp phủ khung ngắm thẩm mỹ */
     .scan-hud {
       position: absolute;
       inset: 0;
@@ -90,8 +122,8 @@
     }
     .viewfinder {
       position: relative;
-      width: 72%;
-      height: 62%;
+      width: 84%;
+      height: 58%;
       border-radius: 14px;
     }
     .corner {
@@ -127,7 +159,6 @@
       font-weight: 500;
     }
 
-    /* Trạng thái chờ cấp quyền camera */
     .cam-fallback {
       position: absolute;
       inset: 0;
@@ -135,26 +166,31 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 18px;
       text-align: center;
       color: #e2e8f0;
       background: #0f172a;
       gap: 10px;
       font-size: 13.5px;
+      line-height: 1.45;
     }
     .cam-fallback.show { display: flex; }
 
+    .cam-actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
     .btn-cam-ctrl {
-      width: 100%;
-      padding: 12px;
+      flex: 1;
+      padding: 12px 10px;
       border: 1.5px solid #e2e8f0;
       border-radius: 12px;
       background: #f8fafc;
       color: #334155;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -165,6 +201,21 @@
       background: #16a34a;
       border-color: #16a34a;
       color: #fff;
+    }
+    .btn-photo-scan {
+      padding: 12px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
     }
 
     /* Nhập mã thủ công */
@@ -244,6 +295,7 @@
       font-size: clamp(9.5px, 2.65vw, 12.5px);
       letter-spacing: -0.25px;
     }
+
     .detail-section { margin-top: 15px; padding-top: 13px; border-top: 1px solid #f1f5f9; }
     .detail-section h3 { font-size: 13.5px; font-weight: 700; color: #0f172a; text-transform: uppercase; margin-bottom: 5px; }
     .detail-section p { font-size: 13.5px; color: #334155; line-height: 1.55; white-space: pre-line; }
@@ -259,23 +311,6 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
-    .viewfinder {
-      position: relative;
-      width: 84%;
-      height: 58%;
-      border-radius: 14px;
-    }
-    .scanner-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      max-height: 290px;
-      border-radius: 18px;
-      overflow: hidden;
-      background: #0f172a;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -287,8 +322,16 @@
       <p>Đưa mã QR hoặc mã vạch vào khung bên dưới</p>
     </div>
 
+    <!-- Thông báo riêng khi người dùng mở link bên trong Zalo -->
+    <div id="zaloNotice" class="zalo-notice">
+      <div>⚠️ <strong>Trình duyệt trong Zalo hạn chế mở camera trực tiếp.</strong> Bạn có thể bấm <b>"Chụp ảnh mã"</b> bên dưới hoặc mở sang trình duyệt ngoài (Chrome/Safari).</div>
+      <div class="zalo-notice-actions">
+        <button type="button" class="btn-zalo-ext" onclick="openInExternalBrowser()">🌐 Mở bằng Chrome / Safari</button>
+      </div>
+    </div>
+
     <!-- Khung Camera tự mở & giao diện ngắm hiện đại -->
-    <div class="scanner-wrapper">
+    <div class="scanner-wrapper" id="scannerWrapper">
       <div id="reader"></div>
 
       <div id="scanHud" class="scan-hud">
@@ -308,9 +351,17 @@
       </div>
     </div>
 
-    <button id="btnToggleCam" class="btn-cam-ctrl" onclick="toggleCamera()">
-      ⏹ Tạm tắt Camera
-    </button>
+    <!-- Input file ẩn dùng chụp ảnh trực tiếp trên Zalo / trình duyệt bị chặn stream -->
+    <input type="file" id="qrImageFile" accept="image/*" capture="environment" style="display:none" onchange="handleImageFileScan(event)" />
+
+    <div class="cam-actions-row">
+      <button id="btnToggleCam" class="btn-cam-ctrl" onclick="toggleCamera()">
+        ⏹ Tạm tắt Camera
+      </button>
+      <button type="button" class="btn-photo-scan" onclick="triggerPhotoCapture()">
+        📸 Chụp ảnh mã
+      </button>
+    </div>
 
     <!-- Nhập mã thủ công -->
     <div class="manual-box">
@@ -325,7 +376,7 @@
   <!-- Loading -->
   <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
-    <div>Đang xác thực dữ liệu sản phẩm...</div>
+    <div id="loadingText">Đang xác thực dữ liệu sản phẩm...</div>
   </div>
 
   <!-- POPUP KẾT QUẢ -->
@@ -366,38 +417,13 @@
     const DEFAULT_COMPANY_NAME = "CTY TNHH MTV THƯƠNG MẠI KML BEAUTY";
     const COMPANY_TAX_CODE = "1900685492";
 
-   let html5QrCode = null;
+    let html5QrCode = null;
     let isScanning = false;
     let isStarting = false;
 
-    window.addEventListener("DOMContentLoaded", () => {
-      // Cho phép bấm trực tiếp vào khung camera nếu đang tắt
-      document.querySelector(".scanner-wrapper").addEventListener("click", () => {
-        if (!isScanning && !isStarting) startCamera();
-      });
+    const isZaloBrowser = /Zalo/i.test(navigator.userAgent || "");
 
-      const params = new URLSearchParams(window.location.search);
-      const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
-      if (codeFromUrl && codeFromUrl.trim()) {
-        verifyCode(codeFromUrl.trim());
-      } else {
-        // Thử tự động mở camera ngay khi vào trang
-        startCamera();
-      }
-    });
-
-    async function startCamera() {
-      if (isScanning || isStarting) return;
-      isStarting = true;
-
-      const btn = document.getElementById("btnToggleCam");
-      const fallback = document.getElementById("camFallback");
-      const fallbackMsg = document.getElementById("camFallbackMsg");
-      const hud = document.getElementById("scanHud");
-
-      fallback.classList.add("show");
-      fallbackMsg.innerHTML = "Đang khởi động camera...<br><span style='font-size:12px;opacity:0.8'>Vui lòng chọn <b>Cho phép (Allow)</b> nếu trình duyệt hỏi quyền</span>";
-
+    function ensureScannerInstance() {
       if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader", {
           experimentalFeatures: {
@@ -414,18 +440,101 @@
           verbose: false
         });
       }
+      return html5QrCode;
+    }
+
+    function extractCodeFromDecoded(decodedText) {
+      let extractedCode = decodedText;
+      try {
+        if (decodedText.startsWith("http")) {
+          const urlObj = new URL(decodedText);
+          extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
+        }
+      } catch (e) {}
+      return extractedCode.trim();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (isZaloBrowser) {
+        document.getElementById("zaloNotice").classList.add("show");
+      }
+
+      document.getElementById("scannerWrapper").addEventListener("click", () => {
+        if (isScanning || isStarting) return;
+        if (isZaloBrowser) {
+          triggerPhotoCapture();
+        } else {
+          startCamera();
+        }
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
+      if (codeFromUrl && codeFromUrl.trim()) {
+        verifyCode(codeFromUrl.trim());
+      } else {
+        startCamera();
+      }
+    });
+
+    function openInExternalBrowser() {
+      const currentUrl = window.location.href;
+      const isAndroid = /Android/i.test(navigator.userAgent || "");
+      if (isAndroid) {
+        const cleanUrl = currentUrl.replace(/^https?:\/\//, "");
+        window.location.href = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+      } else {
+        alert("Trên iPhone trong Zalo: bạn bấm vào biểu tượng dấu 3 chấm (•••) ở góc trên bên phải màn hình → chọn 'Mở bằng trình duyệt' (Safari).");
+      }
+    }
+
+    function triggerPhotoCapture() {
+      const input = document.getElementById("qrImageFile");
+      input.value = "";
+      input.click();
+    }
+
+    async function handleImageFileScan(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const loader = document.getElementById("loadingOverlay");
+      const loadingText = document.getElementById("loadingText");
+      loadingText.textContent = "Đang đọc mã từ hình ảnh...";
+      loader.classList.add("show");
+
+      try {
+        if (isScanning) await stopCamera();
+        const scanner = ensureScannerInstance();
+        const decodedText = await scanner.scanFile(file, false);
+        const code = extractCodeFromDecoded(decodedText);
+        loadingText.textContent = "Đang xác thực dữ liệu sản phẩm...";
+        await verifyCode(code);
+      } catch (err) {
+        loader.classList.remove("show");
+        loadingText.textContent = "Đang xác thực dữ liệu sản phẩm...";
+        alert("Không nhận diện được mã QR hoặc mã vạch trong ảnh. Vui lòng chụp rõ nét hơn và giữ thẳng mã!");
+      }
+    }
+
+    async function startCamera() {
+      if (isScanning || isStarting) return;
+      isStarting = true;
+
+      const btn = document.getElementById("btnToggleCam");
+      const fallback = document.getElementById("camFallback");
+      const fallbackMsg = document.getElementById("camFallbackMsg");
+      const hud = document.getElementById("scanHud");
+
+      fallback.classList.add("show");
+      fallbackMsg.innerHTML = "Đang khởi động camera...<br><span style='font-size:12px;opacity:0.8'>Vui lòng chọn <b>Cho phép (Allow)</b> nếu trình duyệt hỏi quyền</span>";
+
+      ensureScannerInstance();
 
       const onScanSuccess = (decodedText) => {
-        let extractedCode = decodedText;
-        try {
-          if (decodedText.startsWith("http")) {
-            const urlObj = new URL(decodedText);
-            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
-          }
-        } catch (e) {}
-
+        const code = extractCodeFromDecoded(decodedText);
         stopCamera();
-        verifyCode(extractedCode.trim());
+        verifyCode(code);
       };
 
       const scanConfig = {
@@ -437,12 +546,10 @@
       };
 
       try {
-        // Ưu tiên mở camera sau (tương thích mọi dòng máy iOS & Android)
         await html5QrCode.start({ facingMode: "environment" }, scanConfig, onScanSuccess);
         onCameraStarted();
       } catch (err1) {
         try {
-          // Dự phòng: Lấy danh sách camera thiết bị và chọn camera sau cùng nếu facingMode bị từ chối
           const devices = await Html5Qrcode.getCameras();
           if (devices && devices.length > 0) {
             const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
@@ -456,8 +563,15 @@
           isStarting = false;
           hud.style.display = "none";
           fallback.classList.add("show");
-          fallbackMsg.innerHTML = "<strong>Chạm vào đây hoặc bấm nút xanh bên dưới</strong><br>để bật Camera quét mã";
-          btn.innerHTML = "📷 Bấm Để Mở Camera";
+
+          if (isZaloBrowser) {
+            document.getElementById("zaloNotice").classList.add("show");
+            fallbackMsg.innerHTML = "Zalo không hỗ trợ bật camera trực tiếp.<br><strong>Chạm vào đây để chụp ảnh mã vạch / QR</strong>";
+            btn.innerHTML = "📸 Chụp Ảnh Quét Mã";
+          } else {
+            fallbackMsg.innerHTML = "<strong>Chạm vào đây hoặc bấm nút xanh bên dưới</strong><br>để bật Camera quét mã";
+            btn.innerHTML = "📷 Bấm Để Mở Camera";
+          }
           btn.classList.add("active-start");
         }
       }
@@ -486,14 +600,18 @@
       isStarting = false;
       hud.style.display = "none";
       fallback.classList.add("show");
-      fallbackMsg.textContent = "Camera đang tạm tắt — Chạm để bật lại";
-      btn.innerHTML = "📷 Bật Camera Quét Mã";
+      fallbackMsg.textContent = isZaloBrowser
+        ? "Chạm vào đây để chụp ảnh mã vạch / QR"
+        : "Camera đang tạm tắt — Chạm để bật lại";
+      btn.innerHTML = isZaloBrowser ? "📸 Chụp Ảnh Quét Mã" : "📷 Bật Camera Quét Mã";
       btn.classList.add("active-start");
     }
 
     function toggleCamera() {
       if (isScanning) {
         stopCamera();
+      } else if (isZaloBrowser) {
+        triggerPhotoCapture();
       } else {
         startCamera();
       }
@@ -507,6 +625,7 @@
 
     async function verifyCode(rawCode) {
       const loader = document.getElementById("loadingOverlay");
+      document.getElementById("loadingText").textContent = "Đang xác thực dữ liệu sản phẩm...";
       loader.classList.add("show");
 
       try {
@@ -706,8 +825,9 @@
       if (window.history.replaceState && window.location.search) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
-      // Đóng kết quả xong tự bật lại camera để quét tiếp mã khác
-      startCamera();
+      if (!isZaloBrowser) {
+        startCamera();
+      }
     }
 
     function closeModalOnBg(e) {
