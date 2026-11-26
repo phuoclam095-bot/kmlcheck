@@ -844,45 +844,78 @@
         verbose: false
       });
 
+      const onDecoded = (decodedText) => {
+        let extractedCode = decodedText.trim();
+        try {
+          if (extractedCode.startsWith("http")) {
+            const urlObj = new URL(extractedCode);
+            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
+          }
+        } catch (e) {}
+
+        toggleCamera();
+        verifyCode(extractedCode);
+      };
+
+      const scanConfig = {
+        fps: 25,
+        qrbox: (vw, vh) => ({
+          width: Math.min(Math.floor(vw * 0.9), 420),
+          height: Math.min(Math.floor(vh * 0.72), 220)
+        }),
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E
+        ]
+      };
+
       try {
+        // Ưu tiên luồng Full HD + lấy nét liên tục để đọc mã vạch từ xa cực nét
         await html5QrCode.start(
           { facingMode: "environment" },
           {
-            fps: 15,
-            qrbox: { width: 250, height: 115 },
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E
-            ]
+            ...scanConfig,
+            videoConstraints: {
+              facingMode: "environment",
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              focusMode: { ideal: "continuous" }
+            }
           },
-          (decodedText) => {
-            let extractedCode = decodedText.trim();
-            try {
-              if (extractedCode.startsWith("http")) {
-                const urlObj = new URL(extractedCode);
-                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || extractedCode;
-              }
-            } catch (e) {}
-
-            toggleCamera();
-            verifyCode(extractedCode);
-          }
+          onDecoded
         );
-
-        isScanning = true;
-        btn.innerHTML = "Tạm Dừng Camera";
-        btn.classList.remove("active-start");
-      } catch (err) {
-        scannerWrapper.classList.remove("active");
-        introBox.style.display = "flex";
-        alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
+      } catch (err1) {
+        try {
+          // Fallback tự động nếu WebView/Zalo không hỗ trợ constraints nâng cao
+          await html5QrCode.start({ facingMode: "environment" }, scanConfig, onDecoded);
+        } catch (err2) {
+          scannerWrapper.classList.remove("active");
+          introBox.style.display = "flex";
+          alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
+          return;
+        }
       }
-    }
 
+      // Tự động zoom nhẹ 1.5x (nếu thiết bị hỗ trợ) để bắt mã vạch từ xa mà không cần dí sát
+      try {
+        const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
+        const zoomCap = capabilities.zoomFeature();
+        if (zoomCap.isSupported()) {
+          const targetZoom = Math.min(1.5, zoomCap.max());
+          if (targetZoom > zoomCap.min()) {
+            await zoomCap.apply(targetZoom);
+          }
+        }
+      } catch (e) {}
+
+      isScanning = true;
+      btn.innerHTML = "Tạm Dừng Camera";
+      btn.classList.remove("active-start");
+    }
     function checkManualCode() {
       const val = document.getElementById("manualCode").value.trim();
       if (!val) return alert("Vui lòng nhập mã số sản phẩm!");
