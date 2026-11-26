@@ -259,6 +259,12 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
+    .viewfinder {
+      position: relative;
+      width: 84%;
+      height: 58%;
+      border-radius: 14px;
+    }
   </style>
 </head>
 <body>
@@ -374,26 +380,40 @@
       fallbackMsg.textContent = "Đang khởi động camera...";
 
       if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
+        // Kích hoạt bộ giải mã phần cứng BarcodeDetector của thiết bị để bắt mã vạch cực nhanh
+        html5QrCode = new Html5Qrcode("reader", {
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          },
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E
+          ],
+          verbose: false
+        });
       }
 
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
           {
-            fps: 15,
+            fps: 25,
+            // Mở rộng vùng quét ngang 88% để đọc trọn vẹn các vạch sọc EAN-13
             qrbox: (vw, vh) => ({
-              width: Math.floor(vw * 0.75),
-              height: Math.floor(vh * 0.65)
+              width: Math.floor(vw * 0.88),
+              height: Math.floor(vh * 0.58)
             }),
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E
-            ]
+            // Ép độ phân giải HD & lấy nét liên tục để vạch nhỏ không bị nhòe
+            videoConstraints: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: { ideal: "continuous" }
+            }
           },
           (decodedText) => {
             let extractedCode = decodedText;
