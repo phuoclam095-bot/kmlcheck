@@ -31,7 +31,7 @@
       box-shadow: 0 12px 32px rgba(15, 23, 42, 0.07);
       margin: auto 0;
     }
-    .header { text-align: center; margin-bottom: 14px; }
+    .header { text-align: center; margin-bottom: 16px; }
     .brand-pill {
       display: inline-flex;
       align-items: center;
@@ -48,14 +48,11 @@
     .header h1 { font-size: 20px; font-weight: 800; color: #0f172a; }
     .header p { font-size: 13px; color: #64748b; margin-top: 3px; }
 
-    /* KHUNG CAMERA NHỎ GỌN VỚI 4 GÓC NGẮM & TIA LASER */
+    /* KHUNG CAMERA NHỎ GỌN CHUẨN QUÉT MÃ VẠCH & QR */
     .scanner-wrapper {
       position: relative;
       width: 100%;
-      max-width: 280px;
-      aspect-ratio: 4 / 3;
-      max-height: 200px;
-      margin: 0 auto;
+      height: 175px;
       border-radius: 16px;
       overflow: hidden;
       background: #0f172a;
@@ -66,16 +63,22 @@
       height: 100% !important;
       border: none !important;
     }
+    #reader__scan_region {
+      width: 100% !important;
+      height: 100% !important;
+    }
     #reader video {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important;
       border-radius: 16px;
+      display: block !important;
     }
     /* Ẩn khung quét thô mặc định của html5-qrcode */
     #reader__scan_region img,
     #reader__dashboard,
-    #qr-shaded-region {
+    #qr-shaded-region,
+    #reader video::-webkit-media-controls {
       display: none !important;
     }
 
@@ -88,12 +91,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.45) 100%);
+      background: radial-gradient(circle, transparent 48%, rgba(15, 23, 42, 0.42) 100%);
     }
     .viewfinder {
       position: relative;
       width: 82%;
-      height: 60%;
+      height: 64%;
       border-radius: 12px;
     }
     .corner {
@@ -110,11 +113,11 @@
 
     .laser-line {
       position: absolute;
-      left: 6px;
-      right: 6px;
+      left: 8px;
+      right: 8px;
       height: 2px;
       background: linear-gradient(90deg, transparent, #4ade80, #22c55e, #4ade80, transparent);
-      box-shadow: 0 0 8px #22c55e;
+      box-shadow: 0 0 10px #22c55e;
       animation: scanSweep 2.2s ease-in-out infinite;
     }
     .scan-hint-pill {
@@ -127,7 +130,6 @@
       padding: 4px 10px;
       border-radius: 99px;
       font-weight: 500;
-      white-space: nowrap;
     }
 
     /* Trạng thái chờ cấp quyền camera */
@@ -142,25 +144,22 @@
       text-align: center;
       color: #e2e8f0;
       background: #0f172a;
-      gap: 8px;
-      font-size: 12.5px;
-      line-height: 1.4;
-      cursor: pointer;
+      gap: 6px;
+      font-size: 13px;
     }
     .cam-fallback.show { display: flex; }
 
     .btn-cam-ctrl {
       width: 100%;
-      max-width: 280px;
-      margin: 10px auto 0;
-      padding: 11px;
+      padding: 12px;
       border: 1.5px solid #e2e8f0;
       border-radius: 12px;
       background: #f8fafc;
       color: #334155;
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -276,7 +275,7 @@
       <p>Đưa mã QR hoặc mã vạch vào khung bên dưới</p>
     </div>
 
-    <!-- Khung Camera nhỏ gọn -->
+    <!-- Khung Camera nhỏ gọn chuẩn quét mã vạch -->
     <div class="scanner-wrapper">
       <div id="reader"></div>
 
@@ -288,10 +287,10 @@
           <span class="corner c-br"></span>
           <div class="laser-line"></div>
         </div>
-        <div class="scan-hint-pill">Canh mã vào giữa khung</div>
+        <div class="scan-hint-pill">Canh mã QR hoặc mã vạch vào giữa khung</div>
       </div>
 
-      <div id="camFallback" class="cam-fallback" onclick="startCamera()">
+      <div id="camFallback" class="cam-fallback">
         <div style="font-size:24px;">📷</div>
         <div id="camFallbackMsg">Đang khởi động camera...</div>
       </div>
@@ -357,20 +356,47 @@
 
     let html5QrCode = null;
     let isScanning = false;
-    const isZalo = /Zalo/i.test(navigator.userAgent || "");
+
+    // Ép mọi thẻ <video> do html5-qrcode tạo ra chạy inline bên trong khung nhỏ (chống Zalo iOS mở thêm camera lớn)
+    const readerObserver = new MutationObserver(() => {
+      const vid = document.querySelector("#reader video");
+      if (vid && !vid.dataset.inlinePatched) {
+        vid.dataset.inlinePatched = "1";
+        vid.setAttribute("playsinline", "true");
+        vid.setAttribute("webkit-playsinline", "true");
+        vid.playsInline = true;
+        vid.muted = true;
+        vid.addEventListener("pause", () => {
+          if (isScanning) vid.play().catch(() => {});
+        });
+      }
+    });
 
     window.addEventListener("DOMContentLoaded", () => {
+      const readerEl = document.getElementById("reader");
+      if (readerEl) {
+        readerObserver.observe(readerEl, { childList: true, subtree: true });
+      }
+
       const params = new URLSearchParams(window.location.search);
       const codeFromUrl = params.get("code") || params.get("id") || params.get("barcode");
       if (codeFromUrl && codeFromUrl.trim()) {
         verifyCode(codeFromUrl.trim());
       } else {
-        // Thử mở camera tự động; nếu Zalo yêu cầu chạm tay để xin quyền thì catch sẽ bật nút xin quyền ngay
         startCamera();
       }
     });
 
-    function initScanner() {
+    async function startCamera() {
+      if (isScanning) return;
+      const btn = document.getElementById("btnToggleCam");
+      const fallback = document.getElementById("camFallback");
+      const fallbackMsg = document.getElementById("camFallbackMsg");
+      const hud = document.getElementById("scanHud");
+
+      fallback.classList.add("show");
+      fallbackMsg.textContent = "Đang khởi động camera...";
+
       if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader", {
           experimentalFeatures: {
@@ -387,71 +413,35 @@
           verbose: false
         });
       }
-    }
-
-    async function startCamera() {
-      if (isScanning) return;
-      const btn = document.getElementById("btnToggleCam");
-      const fallback = document.getElementById("camFallback");
-      const fallbackMsg = document.getElementById("camFallbackMsg");
-      const hud = document.getElementById("scanHud");
-
-      fallback.classList.add("show");
-      fallbackMsg.textContent = "Đang xin quyền mở camera sau...";
-
-      initScanner();
-
-      const qrConfig = {
-        fps: 20,
-        qrbox: (vw, vh) => ({
-          width: Math.floor(vw * 0.84),
-          height: Math.floor(vh * 0.60)
-        })
-      };
-
-      const onScanSuccess = (decodedText) => {
-        let extractedCode = decodedText;
-        try {
-          if (decodedText.startsWith("http")) {
-            const urlObj = new URL(decodedText);
-            extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
-          }
-        } catch (e) {}
-
-        stopCamera();
-        verifyCode(extractedCode.trim());
-      };
 
       try {
-        // Bước 1: Kích hoạt hộp thoại xin quyền camera trên Zalo/WebView bằng getUserMedia nhẹ
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const tempStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: "environment" } },
-            audio: false
-          });
-          tempStream.getTracks().forEach(track => track.stop());
-        }
-
-        // Bước 2: Lấy đúng ID của camera sau (tránh lỗi WebView Zalo chọn nhầm camera trước hoặc treo)
-        let cameraTarget = { facingMode: "environment" };
-        try {
-          const devices = await Html5Qrcode.getCameras();
-          if (devices && devices.length > 0) {
-            const rearCam = devices.find(d => /back|rear|environment|sau/i.test(d.label)) || devices[devices.length - 1];
-            cameraTarget = rearCam.id;
-          }
-        } catch (e) {}
-
-        // Bước 3: Mở camera sau với độ phân giải vừa phải để WebView Zalo mượt và không lag
         await html5QrCode.start(
-          cameraTarget,
+          { facingMode: "environment" },
           {
-            ...qrConfig,
-            videoConstraints: typeof cameraTarget === "string"
-              ? { deviceId: { exact: cameraTarget }, width: { ideal: 640 }, height: { ideal: 480 } }
-              : { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } }
+            fps: 25,
+            qrbox: (vw, vh) => ({
+              width: Math.floor(vw * 0.85),
+              height: Math.floor(vh * 0.65)
+            }),
+            videoConstraints: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: { ideal: "continuous" }
+            }
           },
-          onScanSuccess
+          (decodedText) => {
+            let extractedCode = decodedText;
+            try {
+              if (decodedText.startsWith("http")) {
+                const urlObj = new URL(decodedText);
+                extractedCode = urlObj.searchParams.get("code") || urlObj.searchParams.get("id") || decodedText;
+              }
+            } catch (e) {}
+
+            stopCamera();
+            verifyCode(extractedCode.trim());
+          }
         );
 
         isScanning = true;
@@ -463,10 +453,8 @@
         isScanning = false;
         hud.style.display = "none";
         fallback.classList.add("show");
-        fallbackMsg.innerHTML = isZalo
-          ? "Chạm vào đây hoặc nút xanh bên dưới để <strong>cấp quyền Camera sau</strong> cho Zalo"
-          : "Bấm nút xanh bên dưới để cấp quyền mở Camera quét mã";
-        btn.innerHTML = "📷 Cấp quyền & Bật Camera";
+        fallbackMsg.textContent = "Bấm nút xanh bên dưới để cấp quyền mở Camera quét mã";
+        btn.innerHTML = "📷 Bật Camera Quét Mã";
         btn.classList.add("active-start");
       }
     }
