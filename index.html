@@ -247,6 +247,14 @@
       0%, 100% { top: 10%; opacity: 0.5; }
       50% { top: 88%; opacity: 1; }
     }
+    #camVideo::-webkit-media-controls,
+    #camVideo::-webkit-media-controls-enclosure,
+    #camVideo::-webkit-media-controls-panel,
+    #camVideo::-webkit-media-controls-play-button,
+    #camVideo::-webkit-media-controls-start-playback-button {
+      display: none !important;
+      -webkit-appearance: none !important;
+    }
   </style>
 </head>
 <body>
@@ -266,7 +274,7 @@
 
     <!-- Khung Camera 1 video duy nhất, cố định chiều cao 260px -->
     <div class="scanner-wrapper" id="scannerWrapper">
-      <video id="camVideo" autoplay playsinline muted></video>
+      <video id="camVideo" autoplay playsinline webkit-playsinline="true" muted disablePictureInPicture></video>
 
       <div id="scanHud" class="scan-hud">
         <div class="viewfinder">
@@ -370,13 +378,14 @@
       video.srcObject = null;
     }
 
-    async function toggleCamera() {
+   async function toggleCamera() {
       const btn = document.getElementById("btnToggleCam");
       const introBox = document.getElementById("scanIntroBox");
       const scannerWrapper = document.getElementById("scannerWrapper");
       const video = document.getElementById("camVideo");
 
       if (isScanning) {
+        video.onpause = null;
         stopMediaStream();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
@@ -386,7 +395,12 @@
       }
 
       try {
-        // Mở trực tiếp 1 luồng camera sau duy nhất vào thẻ <video id="camVideo">
+        // Bắt buộc thiết lập playsInline qua JS trước khi gán srcObject để Zalo iOS không mở fullscreen
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        video.playsInline = true;
+        video.muted = true;
+
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false
@@ -394,6 +408,13 @@
 
         video.srcObject = mediaStream;
         await video.play();
+
+        // Tự động phát lại bên trong khung nếu iOS tạm dừng video
+        video.onpause = () => {
+          if (isScanning && mediaStream) {
+            video.play().catch(() => {});
+          }
+        };
 
         introBox.style.display = "none";
         scannerWrapper.classList.add("active");
@@ -403,13 +424,13 @@
 
         startFrameDecodeLoop(video);
       } catch (err) {
+        video.onpause = null;
         stopMediaStream();
         scannerWrapper.classList.remove("active");
         introBox.style.display = "block";
         alert("Không mở được camera. Vui lòng cấp quyền Camera cho trình duyệt và mở qua HTTPS.");
       }
     }
-
     function startFrameDecodeLoop(video) {
       let detector = null;
       if ("BarcodeDetector" in window) {
